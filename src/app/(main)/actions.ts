@@ -174,11 +174,38 @@ export async function getCharacterByIdAction(id: string) {
             .groupBy(characterComments.id)
             .orderBy(desc(characterComments.createdAt));
 
-        const comments = rawComments.map((row: any) => ({
-            ...row.comment,
-            userImageUrl: row.userImage,
-            userReaction: row.reactionType
-        }));
+        const commentIds = rawComments.map((r: any) => r.comment.id);
+        const allReactions = commentIds.length > 0 ? await db.select()
+            .from(commentReactions)
+            .where(inArray(commentReactions.commentId, commentIds)) : [];
+
+        // Aggregate reactions
+        const reactionMap: Record<string, Record<string, number>> = {};
+        const userReactionMap: Record<string, string | null> = {};
+
+        for (const reaction of allReactions) {
+            if (!reactionMap[reaction.commentId]) reactionMap[reaction.commentId] = {};
+            reactionMap[reaction.commentId][reaction.reactionType] = (reactionMap[reaction.commentId][reaction.reactionType] || 0) + 1;
+            
+            if (userId && reaction.userId === userId) {
+                userReactionMap[reaction.commentId] = reaction.reactionType;
+            }
+        }
+
+        const comments = rawComments.map((row: any) => {
+            const commentReactionsObj = reactionMap[row.comment.id] || {};
+            // Sort by count descending
+            const sortedReactions = Object.entries(commentReactionsObj)
+                .map(([type, count]) => ({ type, count }))
+                .sort((a, b) => b.count - a.count);
+
+            return {
+                ...row.comment,
+                userImageUrl: row.userImage,
+                userReaction: userReactionMap[row.comment.id] || null,
+                reactions: sortedReactions
+            };
+        });
 
         const resultBase = { success: true, data: { ...char[0] }, comments };
 
@@ -264,7 +291,7 @@ export async function addCommentAction(characterId: string, content: string, par
     }
 }
 
-export async function toggleCommentReactionAction(commentId: string, reactionType: 'like' | 'laugh' | 'cool' | 'thumbsUp', isAdding: boolean) {
+export async function toggleCommentReactionAction(commentId: string, reactionType: string, isAdding: boolean) {
     try {
         const session = await auth();
         if (!session?.user?.id) return { success: false, error: "Not authenticated" };
@@ -280,42 +307,12 @@ export async function toggleCommentReactionAction(commentId: string, reactionTyp
                 if (oldType === reactionType) return { success: true };
 
                 await db.update(commentReactions).set({ reactionType }).where(and(eq(commentReactions.userId, userId), eq(commentReactions.commentId, commentId)));
-
-                const updateQuery = sql`
-                    UPDATE character_comments SET 
-                        likes_count = MAX(0, likes_count + CASE WHEN ${reactionType} = 'like' THEN 1 WHEN ${oldType} = 'like' THEN -1 ELSE 0 END),
-                        laugh_count = MAX(0, laugh_count + CASE WHEN ${reactionType} = 'laugh' THEN 1 WHEN ${oldType} = 'laugh' THEN -1 ELSE 0 END),
-                        cool_count = MAX(0, cool_count + CASE WHEN ${reactionType} = 'cool' THEN 1 WHEN ${oldType} = 'cool' THEN -1 ELSE 0 END),
-                        thumbs_up_count = MAX(0, thumbs_up_count + CASE WHEN ${reactionType} = 'thumbsUp' THEN 1 WHEN ${oldType} = 'thumbsUp' THEN -1 ELSE 0 END)
-                    WHERE id = ${commentId}
-                `;
-                await db.run(updateQuery);
             } else {
                 await db.insert(commentReactions).values({ userId, commentId, reactionType });
-
-                let setObj: any = {};
-                if (reactionType === 'like') setObj.likesCount = sql`${characterComments.likesCount} + 1`;
-                if (reactionType === 'laugh') setObj.laughCount = sql`${characterComments.laughCount} + 1`;
-                if (reactionType === 'cool') setObj.coolCount = sql`${characterComments.coolCount} + 1`;
-                if (reactionType === 'thumbsUp') setObj.thumbsUpCount = sql`${characterComments.thumbsUpCount} + 1`;
-
-                await db.update(characterComments)
-                    .set(setObj)
-                    .where(eq(characterComments.id, commentId));
             }
         } else {
             await db.delete(commentReactions)
                 .where(and(eq(commentReactions.userId, userId), eq(commentReactions.commentId, commentId)));
-
-            let setObj: any = {};
-            if (reactionType === 'like') setObj.likesCount = sql`MAX(0, ${characterComments.likesCount} - 1)`;
-            if (reactionType === 'laugh') setObj.laughCount = sql`MAX(0, ${characterComments.laughCount} - 1)`;
-            if (reactionType === 'cool') setObj.coolCount = sql`MAX(0, ${characterComments.coolCount} - 1)`;
-            if (reactionType === 'thumbsUp') setObj.thumbsUpCount = sql`MAX(0, ${characterComments.thumbsUpCount} - 1)`;
-
-            await db.update(characterComments)
-                .set(setObj)
-                .where(eq(characterComments.id, commentId));
         }
 
         const charComment = await db.select({ characterId: characterComments.characterId }).from(characterComments).where(eq(characterComments.id, commentId)).limit(1);

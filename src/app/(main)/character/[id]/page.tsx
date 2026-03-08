@@ -35,18 +35,16 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const [reactionType, setReactionType] = useState<string | null>(comment.userReaction || null);
-    const [counts, setCounts] = useState({
-        like: comment.likesCount || 0,
-        laugh: comment.laughCount || 0,
-        cool: comment.coolCount || 0,
-        thumbsUp: comment.thumbsUpCount || 0
-    });
+    const [reactions, setReactions] = useState<{ type: string, count: number }[]>(comment.reactions || []);
 
     useEffect(() => {
         if (comment.userReaction !== undefined) {
             setReactionType(comment.userReaction);
         }
-    }, [comment.userReaction]);
+        if (comment.reactions !== undefined) {
+            setReactions(comment.reactions);
+        }
+    }, [comment.userReaction, comment.reactions]);
 
     const [showReactions, setShowReactions] = useState(false);
     const pressTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -55,7 +53,7 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
     const replies = allComments.filter((c: any) => c.parentId === comment.id);
 
     const handlePointerDown = (e: React.PointerEvent) => {
-        if (e.button !== 0 && e.pointerType === 'mouse') return; // Only left click or touch
+        if (e.button !== 0 && e.pointerType === 'mouse') return;
 
         pressTimeout.current = setTimeout(() => {
             setShowReactions(true);
@@ -72,7 +70,7 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
         }
     };
 
-    const handleSelectReaction = async (type: string, e?: React.MouseEvent) => {
+    const handleSelectReaction = async (type: string, e?: any) => {
         if (e) {
             e.stopPropagation();
             e.preventDefault();
@@ -81,17 +79,28 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
 
         if (reactionType === type) {
             setReactionType(null);
-            setCounts(prev => ({ ...prev, [type]: Math.max(0, prev[type as keyof typeof prev] - 1) }));
-            await toggleCommentReactionAction(comment.id, type as any, false);
+            setReactions(prev => {
+                const updated = prev.map(r => r.type === type ? { ...r, count: r.count - 1 } : r).filter(r => r.count > 0);
+                return updated.sort((a, b) => b.count - a.count);
+            });
+            await toggleCommentReactionAction(comment.id, type, false);
         } else {
             const oldType = reactionType;
             setReactionType(type);
-            setCounts(prev => {
-                const newCounts = { ...prev, [type]: prev[type as keyof typeof prev] + 1 };
-                if (oldType) newCounts[oldType as keyof typeof prev] = Math.max(0, newCounts[oldType as keyof typeof prev] - 1);
-                return newCounts;
+            setReactions(prev => {
+                let updated = [...prev];
+                if (oldType) {
+                    updated = updated.map(r => r.type === oldType ? { ...r, count: r.count - 1 } : r).filter(r => r.count > 0);
+                }
+                const existing = updated.find(r => r.type === type);
+                if (existing) {
+                    updated = updated.map(r => r.type === type ? { ...r, count: r.count + 1 } : r);
+                } else {
+                    updated.push({ type, count: 1 });
+                }
+                return updated.sort((a, b) => b.count - a.count);
             });
-            await toggleCommentReactionAction(comment.id, type as any, true);
+            await toggleCommentReactionAction(comment.id, type, true);
         }
     };
 
@@ -101,13 +110,7 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
             pressTimeout.current = null;
         }
 
-        if (showReactions) return;
-
-        if (reactionType) {
-            handleSelectReaction(reactionType, e);
-        } else {
-            handleSelectReaction('like', e);
-        }
+        setShowReactions(!showReactions);
     };
 
     const submitReply = async () => {
@@ -137,7 +140,11 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
                 <div className={styles.commentBody}>
                     <div className={styles.commentHeader}>
                         <div>
-                            <span className={styles.commentUser}>{comment.userName}</span>
+                            <span className={styles.commentUser}>
+                                <Link href={`/profile/${comment.userName}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    {comment.userName}
+                                </Link>
+                            </span>
                             <div className={styles.commentMeta} suppressHydrationWarning>
                                 {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                             </div>
@@ -185,69 +192,107 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
                     </div>
 
                     <div className={styles.commentActions}>
-                        <div
-                            style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
-                            onMouseEnter={() => {
-                                hoverTimer.current = setTimeout(() => setShowReactions(true), 400);
-                            }}
-                            onMouseLeave={() => {
-                                if (hoverTimer.current) clearTimeout(hoverTimer.current);
-                                setTimeout(() => {
-                                    if (!document.querySelector(`.${styles.reactionPopover}:hover`)) {
-                                        setShowReactions(false);
-                                    }
-                                }, 300);
-                            }}
-                        >
+                        {reactions.map((r, i) => (
                             <button
-                                onPointerDown={handlePointerDown}
-                                onPointerUp={handlePointerUp}
-                                onPointerLeave={handlePointerUp}
-                                onClick={handlePrimaryClick}
-                                onContextMenu={(e) => { e.preventDefault(); }}
-                                className={`${styles.commentActionBtn} ${reactionType ? styles.liked : ''}`}
-                                style={{ color: reactionType && reactionType !== 'like' ? 'var(--accent-primary)' : '' }}
-                                title="React (Hover or long press for more)"
+                                key={r.type}
+                                onClick={(e) => handleSelectReaction(r.type, e)}
+                                className={`${styles.commentActionBtn} ${reactionType === r.type ? styles.liked : ''}`}
+                                style={{
+                                    backgroundColor: reactionType === r.type ? 'rgba(var(--accent-primary-rgb), 0.1)' : 'var(--bg-secondary)',
+                                    border: reactionType === r.type ? '1px solid var(--accent-primary)' : '1px solid var(--border-light)',
+                                    borderRadius: 'var(--radius-full)',
+                                    padding: '0.25rem 0.6rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    height: '28px'
+                                }}
                             >
-                                <motion.div animate={reactionType ? { scale: [1, 1.4, 1] } : { scale: 1 }} transition={{ duration: 0.3 }}>
-                                    {reactionType === 'laugh' ? '😄' :
-                                        reactionType === 'cool' ? '😎' :
-                                            reactionType === 'thumbsUp' ? '💯' :
-                                                <Heart size={16} fill={reactionType === 'like' ? '#ef4444' : 'transparent'} color={reactionType === 'like' ? '#ef4444' : 'currentColor'} />}
-                                </motion.div>
-                                <span style={{ marginLeft: '0.25rem' }}>
-                                    {reactionType === 'laugh' ? counts.laugh :
-                                        reactionType === 'cool' ? counts.cool :
-                                            reactionType === 'thumbsUp' ? counts.thumbsUp :
-                                                counts.like}
-                                </span>
+                                <span style={{ fontSize: '1rem', lineHeight: 1 }}>{r.type}</span>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: reactionType === r.type ? 'var(--accent-primary)' : 'var(--text-secondary)' }}>{r.count}</span>
                             </button>
+                        ))}
 
-                            <AnimatePresence>
-                                {showReactions && (
-                                    <>
-                                        <div
-                                            style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'none' }} /* Desktop doesn't need invisible backdrop closing unless click outside */
-                                            onClick={(e) => { e.stopPropagation(); setShowReactions(false); }}
-                                            className="md-backdrop"
-                                        />
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.8 }}
-                                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                            className={styles.reactionPopover}
-                                            onMouseLeave={() => setShowReactions(false)}
-                                        >
-                                            <button className={styles.reactionEmojiBtn} onClick={(e) => handleSelectReaction('like', e)}>❤️</button>
-                                            <button className={styles.reactionEmojiBtn} onClick={(e) => handleSelectReaction('laugh', e)}>😄</button>
-                                            <button className={styles.reactionEmojiBtn} onClick={(e) => handleSelectReaction('cool', e)}>😎</button>
-                                            <button className={styles.reactionEmojiBtn} onClick={(e) => handleSelectReaction('thumbsUp', e)}>💯</button>
-                                        </motion.div>
-                                    </>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                        {!reactionType && (
+                            <div
+                                style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+                                onMouseEnter={() => {
+                                    hoverTimer.current = setTimeout(() => setShowReactions(true), 400);
+                                }}
+                                onMouseLeave={() => {
+                                    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+                                    setTimeout(() => {
+                                        if (!document.querySelector(`.${styles.reactionPopover}:hover`)) {
+                                            setShowReactions(false);
+                                        }
+                                    }, 300);
+                                }}
+                            >
+                                <button
+                                    onPointerDown={handlePointerDown}
+                                    onPointerUp={handlePointerUp}
+                                    onPointerLeave={handlePointerUp}
+                                    onClick={handlePrimaryClick}
+                                    onContextMenu={(e) => { e.preventDefault(); }}
+                                    className={`${styles.commentActionBtn}`}
+                                    title="Add Reaction"
+                                    style={{
+                                        border: '1px solid var(--border-light)',
+                                        borderRadius: 'var(--radius-full)',
+                                        backgroundColor: 'var(--bg-secondary)',
+                                        height: '28px',
+                                        padding: '0 0.5rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.2rem',
+                                        color: 'var(--text-secondary)'
+                                    }}
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, lineHeight: 1 }}>+</span>
+                                </button>
+
+                                <AnimatePresence>
+                                    {showReactions && (
+                                        <>
+                                            <div
+                                                style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'none' }}
+                                                onClick={(e) => { e.stopPropagation(); setShowReactions(false); }}
+                                                className="md-backdrop"
+                                            />
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.8 }}
+                                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                                className={styles.reactionPopover}
+                                                onMouseLeave={() => setShowReactions(false)}
+                                                style={{
+                                                    display: 'flex',
+                                                    gap: '0.4rem',
+                                                    padding: '0.4rem',
+                                                    background: 'var(--bg-secondary)',
+                                                    border: '1px solid var(--border-light)',
+                                                    borderRadius: 'var(--radius-full)', /* Fully rounded according to theme */
+                                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
+                                                }}
+                                            >
+                                                {['❤️', '😄', '😎', '💯'].map(emoji => (
+                                                    <button
+                                                        key={emoji}
+                                                        className={styles.reactionEmojiBtn}
+                                                        onClick={(e) => handleSelectReaction(emoji, e)}
+                                                    >
+                                                        {emoji}
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        </>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )}
 
                         <button
                             onClick={() => setIsReplying(!isReplying)}
@@ -487,7 +532,7 @@ export default function CharacterDetailsPage() {
                 content: commentText,
                 createdAt: new Date().toISOString(),
                 parentId: null,
-                likesCount: 0
+                reactions: []
             }, ...prev]);
             setCommentText("");
         } else {
@@ -508,7 +553,7 @@ export default function CharacterDetailsPage() {
                 userImageUrl: res.userImageUrl,
                 content: text,
                 createdAt: new Date().toISOString(),
-                likesCount: 0
+                reactions: []
             }]);
         } else {
             setActionError(res.error || "Failed to post reply.");

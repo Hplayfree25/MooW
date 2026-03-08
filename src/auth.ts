@@ -1,18 +1,16 @@
 import NextAuth from "next-auth";
-import GitHub from "next-auth/providers/github";
-import Google from "next-auth/providers/google";
-import Credentials from "next-auth/providers/credentials";
+import authConfig from "./auth.config";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/db";
+import Credentials from "next-auth/providers/credentials";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-    adapter: DrizzleAdapter(db),
+    ...authConfig,
     providers: [
-        GitHub,
-        Google,
+        ...authConfig.providers,
         Credentials({
             credentials: {
                 username: { label: "Username", type: "text" },
@@ -40,35 +38,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
         }),
     ],
-    session: {
-        strategy: "jwt",
-    },
-    pages: {
-        signIn: "/login",
-    },
-    callbacks: {
-        async session({ session, token }) {
-            if (session.user && token.sub) {
-                session.user.id = token.sub;
-
-                try {
-                    const [dbUser] = await db.select({ username: users.username, image: users.image })
-                        .from(users).where(eq(users.id, token.sub)).limit(1);
-                    if (dbUser) {
-                        session.user.name = dbUser.username;
-                        session.user.image = dbUser.image;
-                    }
-                } catch (e) {
-                    console.error("Failed to fetch fresh user data for session:", e);
-                }
-            }
-            return session;
-        },
-        async jwt({ token, user }) {
-            if (user) {
-                token.sub = user.id;
-            }
-            return token;
-        },
-    },
+    adapter: DrizzleAdapter(db),
 });
