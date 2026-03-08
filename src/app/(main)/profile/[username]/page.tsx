@@ -11,8 +11,9 @@ import { getBadgeConfig } from "@/config/badges";
 export default async function PublicProfilePage(props: { params: Promise<{ username: string }> }) {
     const params = await props.params;
     const session = await auth();
+    const decodedUsername = decodeURIComponent(params.username);
 
-    const [user] = await db.select().from(users).where(eq(users.username, params.username)).limit(1);
+    const [user] = await db.select().from(users).where(eq(users.username, decodedUsername)).limit(1);
     if (!user) redirect("/");
 
     let isFollowing = false;

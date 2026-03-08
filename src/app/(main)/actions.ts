@@ -165,6 +165,7 @@ export async function getCharacterByIdAction(id: string) {
         const rawComments = await db.select({
             comment: characterComments,
             userImage: users.image,
+            userName: users.username,
             reactionType: userId ? sql`MAX(CASE WHEN ${commentReactions.userId} = ${userId} THEN ${commentReactions.reactionType} ELSE NULL END)` : sql`NULL`
         })
             .from(characterComments)
@@ -179,14 +180,13 @@ export async function getCharacterByIdAction(id: string) {
             .from(commentReactions)
             .where(inArray(commentReactions.commentId, commentIds)) : [];
 
-        // Aggregate reactions
         const reactionMap: Record<string, Record<string, number>> = {};
         const userReactionMap: Record<string, string | null> = {};
 
         for (const reaction of allReactions) {
             if (!reactionMap[reaction.commentId]) reactionMap[reaction.commentId] = {};
             reactionMap[reaction.commentId][reaction.reactionType] = (reactionMap[reaction.commentId][reaction.reactionType] || 0) + 1;
-            
+
             if (userId && reaction.userId === userId) {
                 userReactionMap[reaction.commentId] = reaction.reactionType;
             }
@@ -194,13 +194,13 @@ export async function getCharacterByIdAction(id: string) {
 
         const comments = rawComments.map((row: any) => {
             const commentReactionsObj = reactionMap[row.comment.id] || {};
-            // Sort by count descending
             const sortedReactions = Object.entries(commentReactionsObj)
                 .map(([type, count]) => ({ type, count }))
                 .sort((a, b) => b.count - a.count);
 
             return {
                 ...row.comment,
+                userName: row.userName || "Anonymous",
                 userImageUrl: row.userImage,
                 userReaction: userReactionMap[row.comment.id] || null,
                 reactions: sortedReactions
