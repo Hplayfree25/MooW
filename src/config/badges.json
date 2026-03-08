@@ -1,0 +1,50 @@
+[
+    {
+        "id": 1,
+        "name": "Early Adopter",
+        "description": "Joined during the early beta phase of Moow AI.",
+        "iconUrl": "/iconsb/early_adopter.webp",
+        "rarity": "Epic",
+        "condition": "Join before stable release."
+    },
+    {
+        "id": 2,
+        "name": "Staff",
+        "description": "Verified developer and core team member of Moow AI.",
+        "iconUrl": "/iconsb/staff.svg",
+        "rarity": "Mythical",
+        "condition": "Manual grant to developers."
+    },
+    {
+        "id": 3,
+        "name": "Verified Creator",
+        "description": "Recognized for high interaction bots or exceptional high-quality content.",
+        "iconUrl": "/iconsb/verified_creator.svg",
+        "rarity": "Legendary",
+        "condition": "Min 10K chats per character and total 50K minimum."
+    },
+    {
+        "id": 4,
+        "name": "Supporter",
+        "description": "Generously supported the platform through donations.",
+        "iconUrl": "/iconsb/supporter.svg",
+        "rarity": "Rare",
+        "condition": "Donate to Moow AI."
+    },
+    {
+        "id": 5,
+        "name": "Wiki Contributor",
+        "description": "Helped build platform documentation and guided users on creation.",
+        "iconUrl": "/iconsb/wiki_contributor.svg",
+        "rarity": "Rare",
+        "condition": "Contributed significantly to Docs/Wiki."
+    },
+    {
+        "id": 6,
+        "name": "Top Contributor",
+        "description": "Consistently active and helpful in comments, Discord, and communities.",
+        "iconUrl": "/iconsb/top_contributor.svg",
+        "rarity": "Epic",
+        "condition": "Active community member recognized by staff."
+    }
+]

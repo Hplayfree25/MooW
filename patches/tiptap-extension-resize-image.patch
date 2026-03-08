@@ -1,0 +1,42 @@
+diff --git a/dist/index.js b/dist/index.js
+index 8c143f3fb8e81342449557a1f783f1990155a151..b6632912e81fc7effb1b452aa6978797a8552ab1 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -366,7 +366,7 @@ class ImageNodeView {
+             const target = e.target;
+             const isClickInside = this.elements.container.contains(target) ||
+                 target.style.cssText ===
+-                    `width: ${CONSTANTS.ICON_SIZE}; height: ${CONSTANTS.ICON_SIZE}; cursor: pointer;`;
++                `width: ${CONSTANTS.ICON_SIZE}; height: ${CONSTANTS.ICON_SIZE}; cursor: pointer;`;
+             if (!isClickInside) {
+                 this.clearContainerBorder();
+                 this.removeResizeElements();
+@@ -388,7 +388,7 @@ class ImageNodeView {
+     }
+ }
+ 
+-const ImageResize = Image.extend({
++const ImageResize = (Image.Image || Image.default || Image).extend({
+     name: 'imageResize',
+     addOptions() {
+         var _a;
+@@ -397,7 +397,8 @@ const ImageResize = Image.extend({
+     addAttributes() {
+         var _a;
+         const inline = this.options.inline;
+-        return Object.assign(Object.assign({}, (_a = this.parent) === null || _a === void 0 ? void 0 : _a.call(this)), { containerStyle: {
++        return Object.assign(Object.assign({}, (_a = this.parent) === null || _a === void 0 ? void 0 : _a.call(this)), {
++            containerStyle: {
+                 default: null,
+                 parseHTML: (element) => {
+                     const containerStyle = element.getAttribute('containerstyle');
+@@ -411,7 +412,8 @@ const ImageResize = Image.extend({
+                 },
+             }, wrapperStyle: {
+                 default: StyleManager.getWrapperStyle(inline),
+-            } });
++            }
++        });
+     },
+     addNodeView() {
+         return ({ node, editor, getPos }) => {

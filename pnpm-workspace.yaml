@@ -1,0 +1,2 @@
+patchedDependencies:
+  tiptap-extension-resize-image: patches/tiptap-extension-resize-image.patch

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <!-- Definisi gradasi warna emas yang elegan dan premium -->
+    <linearGradient id="goldGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#AA771C" />
+      <stop offset="30%" stop-color="#D4AF37" />
+      <stop offset="50%" stop-color="#F3E5AB" />
+      <stop offset="70%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#8A5A19" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Grup utama dengan warna emas, tanpa isi (transparan), ujung garis membulat -->
+  <g stroke="url(#goldGradient)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    
+    <path d="M 100 160 
+             C 50 160, 30 100, 45 50 
+             L 75 85 
+             Q 100 75, 125 85 
+             L 155 50 
+             C 170 100, 150 160, 100 160 Z" 
+          stroke-width="6"/>
+    
+    <path d="M 60 105 Q 75 90, 90 105" stroke-width="4"/>
+    <path d="M 140 105 Q 125 90, 110 105" stroke-width="4"/>
+    
+    <path d="M 95 130 L 105 130 L 100 137 Z" stroke-width="3"/>
+    
+  </g>
+</svg>

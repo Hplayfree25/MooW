@@ -1,0 +1,347 @@
+.editorContainer {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) {
+    .toolbar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 6px;
+        gap: 2px;
+    }
+
+    .toolbar::-webkit-scrollbar {
+        height: 0;
+        display: none;
+    }
+
+    .divider {
+        margin: 0 2px;
+    }
+
+    .iconBtn {
+        padding: 5px;
+        min-width: 28px;
+        flex-shrink: 0;
+    }
+}
+
+.divider {
+    width: 1px;
+    height: 20px;
+    background-color: var(--border-color);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+.iconBtn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, color 0.2s;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+}
+
+.iconBtn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.iconBtn.active {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--accent-primary);
+}
+
+.colorBar {
+    display: block;
+    width: 16px;
+    height: 3px;
+    border-radius: 2px;
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.colorPopover {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    min-width: 200px;
+}
+
+.colorSection {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.colorLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.colorPopoverInput {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    padding: 2px;
+    background: var(--bg-primary);
+}
+
+.resetBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.resetBtn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.dropdownBtn {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    min-width: 110px;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.viewToggleBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.viewToggleBtn.activeMode {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border-color: var(--text-primary);
+}
+
+.editorBody {
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+.tiptapEditor {
+    flex-grow: 1;
+    padding: 16px;
+    outline: none;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.tiptapEditor ul,
+.tiptapEditor ol {
+    padding-left: 1.5rem;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.tiptapEditor li>p {
+    margin: 0;
+}
+
+.tiptapEditor img {
+    max-width: 100% !important;
+    height: auto;
+}
+
+.tiptapEditor a {
+    color: #3b82f6;
+    text-decoration: none;
+    cursor: text;
+    transition: text-decoration 0.2s;
+}
+
+.tiptapEditor a:hover {
+    text-decoration: underline;
+}
+
+
+
+.tiptapEditor div[style*="border: 1px dashed"] {
+    max-width: 100% !important;
+}
+
+.tiptapEditor :global(.ProseMirror) {
+    outline: none;
+    min-height: 250px;
+}
+
+.tiptapEditor :global(.ProseMirror p.is-editor-empty:first-child::before) {
+    color: var(--text-tertiary);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+}
+
+.markdownSource {
+    flex-grow: 1;
+    padding: 16px;
+    border: none;
+    outline: none;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: monospace;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 250px;
+}
+
+/* Popover Styles */
+.popoverOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+}
+
+.popoverContent {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 101;
+    overflow: hidden;
+}
+
+.dropdownMenu {
+    display: flex;
+    flex-direction: column;
+    min-width: 150px;
+}
+
+.dropdownMenu button {
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 8px 16px;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+.dropdownMenu button:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.dropdownMenu h2,
+.dropdownMenu h3,
+.dropdownMenu h4 {
+    margin: 0;
+}
+
+.dropdownMenu h2 {
+    font-size: 1.5rem;
+}
+
+.dropdownMenu h3 {
+    font-size: 1.25rem;
+}
+
+.dropdownMenu h4 {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.linkPopover {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    width: 250px;
+}
+
+.linkInput {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    outline: none;
+}
+
+.linkInput:focus {
+    border-color: var(--accent-primary);
+}
+
+.primaryBtn {
+    background-color: var(--accent-primary);
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.primaryBtn:hover {
+    background-color: var(--accent-hover);
+}

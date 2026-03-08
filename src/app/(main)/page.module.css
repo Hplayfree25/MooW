@@ -1,0 +1,269 @@
+.exploreContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1rem 1.5rem;
+    overflow-y: auto;
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+    .exploreContainer {
+        padding: 1rem;
+    }
+}
+
+.exploreHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.searchBarWrapper {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-full);
+    padding: 0.75rem 1.5rem;
+    gap: 1rem;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.searchBarWrapper:focus-within {
+    border-color: var(--accent-hover);
+    box-shadow: var(--shadow-glow);
+}
+
+.searchInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.searchInput::placeholder {
+    color: var(--text-tertiary);
+}
+
+.filtersWrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.leftFilters,
+.rightFilters {
+    display: flex;
+    gap: 0.5rem;
+    background-color: var(--bg-secondary);
+    padding: 0.25rem;
+    border-radius: var(--radius-lg);
+}
+
+.filterBtn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--text-secondary);
+    border: none;
+    background: transparent;
+}
+
+.filterBtnActive {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.filterBtn:hover:not(.filterBtnActive) {
+    color: var(--text-primary);
+}
+
+.characterGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+    .characterGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .filtersWrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .leftFilters,
+    .rightFilters {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+.characterCard {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: 1px solid var(--border-light);
+    position: relative;
+    overflow: hidden;
+}
+
+.characterCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--accent-light);
+}
+
+.cardAvatar {
+    width: 100%;
+    aspect-ratio: 1;
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.cardAvatarFallback {
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+}
+
+.cardContent {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+}
+
+.cardHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.cardInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.cardName {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cardCreator {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.cardBio {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+}
+
+.markdownBio :global(p) {
+    display: inline;
+    margin: 0;
+}
+
+.markdownBio :global(strong),
+.markdownBio :global(b) {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.markdownBio :global(em),
+.markdownBio :global(i) {
+    font-style: italic;
+}
+
+.cardTags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.tag {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+    margin-top: auto;
+}
+
+.stats {
+    display: flex;
+    gap: 1rem;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.statItem {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.chatButton {
+    background-color: var(--accent-light);
+    color: var(--accent-primary);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.characterCard:hover .chatButton {
+    background-color: var(--accent-primary);
+    color: white;
+}

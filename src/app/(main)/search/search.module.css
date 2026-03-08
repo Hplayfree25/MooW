@@ -1,0 +1,257 @@
+.searchContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.5rem 2rem;
+    overflow-y: auto;
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+    .searchContainer {
+        padding: 1rem;
+    }
+}
+
+.searchHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.backBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: var(--radius-full);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.backBtn:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.searchTitle {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.searchBarWrapper {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-full);
+    padding: 0.75rem 1.5rem;
+    gap: 1rem;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.searchBarWrapper:focus-within {
+    border-color: var(--accent-hover);
+    box-shadow: var(--shadow-glow);
+}
+
+.searchInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.searchInput::placeholder {
+    color: var(--text-tertiary);
+}
+
+.filtersPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background-color: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+}
+
+.filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.filterLabel {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.filterOptions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filterBtn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+}
+
+.filterBtnActive {
+    background-color: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+.filterBtn:hover:not(.filterBtnActive) {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.resultsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.characterGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+    .characterGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+
+.characterCard {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: 1px solid var(--border-light);
+    position: relative;
+    overflow: hidden;
+}
+
+.characterCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--accent-light);
+}
+
+.cardAvatar {
+    width: 100%;
+    aspect-ratio: 1;
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.cardAvatarFallback {
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+}
+
+.cardContent {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.cardName {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cardCreator {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.cardTags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.tag {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: flex-start;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-light);
+    margin-top: auto;
+}
+
+.statItem {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--text-tertiary);
+    gap: 1rem;
+}

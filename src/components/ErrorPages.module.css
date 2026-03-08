@@ -1,0 +1,372 @@
+.bgContainer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+:global(.dark) .bgContainer {
+  background-color: rgba(10, 15, 29, 0.2);
+}
+
+.shapeNode {
+  position: absolute;
+  opacity: 0.3;
+  filter: blur(40px);
+}
+
+:global(.dark) .shapeNode {
+  opacity: 0.2;
+}
+
+.bgBackdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(80px);
+  -webkit-backdrop-filter: blur(80px);
+}
+
+:global(.dark) .bgBackdrop {
+  background-color: rgba(10, 15, 29, 0.6);
+}
+
+.mainContainer {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 1.5rem;
+}
+
+.card {
+  z-index: 10;
+  display: flex;
+  width: 100%;
+  max-width: 32rem;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  background-color: rgba(255, 255, 255, 0.6);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  position: relative;
+  overflow: hidden;
+}
+
+:global(.dark) .card {
+  background-color: rgba(10, 15, 29, 0.6);
+}
+
+@media (min-width: 768px) {
+  .card {
+    padding: 3rem;
+  }
+}
+
+.cardPrimary {
+  max-width: 28rem;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.cardGlow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8rem;
+  height: 8rem;
+  background-color: rgba(59, 130, 246, 0.2);
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.iconContainer {
+  display: flex;
+  height: 5rem;
+  width: 5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: rgba(220, 38, 38, 0.1);
+  color: #ef4444;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.iconContainerPrimary {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  height: 6rem;
+  width: 6rem;
+}
+
+.icon {
+  width: 3rem;
+  height: 3rem;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #ef4444;
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 3rem;
+  }
+}
+
+.titlePrimary {
+  color: var(--text-primary);
+}
+
+.description {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+@media (min-width: 768px) {
+  .description {
+    font-size: 1.125rem;
+  }
+}
+
+.descriptionSmall {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}
+
+.errorContent404 {
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.svgGroup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.15));
+}
+
+@media (min-width: 768px) {
+  .svgGroup {
+    gap: 1.5rem;
+  }
+}
+
+.svgNumber {
+  height: 8rem;
+  width: 6rem;
+  fill: #3b82f6;
+}
+
+@media (min-width: 768px) {
+  .svgNumber {
+    height: 12rem;
+    width: 8rem;
+  }
+}
+
+.title404 {
+  margin-top: 2rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  .title404 {
+    font-size: 3rem;
+  }
+}
+
+.desc404 {
+  margin-top: 1rem;
+  max-width: 28rem;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 768px) {
+  .desc404 {
+    font-size: 1.125rem;
+  }
+}
+
+.codeTag {
+  font-family: monospace;
+  color: #3b82f6;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 0.375rem;
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
+.actionGroup {
+  margin-top: 2.5rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .actionGroup {
+    flex-direction: row;
+  }
+}
+
+.btnPrimary,
+.btnSecondary,
+.btnDestructive {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.75rem 2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+@media (min-width: 640px) {
+
+  .btnPrimary,
+  .btnSecondary,
+  .btnDestructive {
+    width: auto;
+  }
+}
+
+.btnBtnFull {
+  width: 100% !important;
+}
+
+.btnPrimary {
+  background-color: #3b82f6;
+  color: #fff;
+}
+
+.btnPrimary:hover {
+  transform: scale(1.05);
+  background-color: #2563eb;
+}
+
+.btnPrimary:active {
+  transform: scale(0.95);
+}
+
+.btnDestructive {
+  background-color: rgba(220, 38, 38, 0.9);
+  color: #fff;
+}
+
+.btnDestructive:hover {
+  transform: scale(1.05);
+  background-color: #dc2626;
+}
+
+.btnDestructive:active {
+  transform: scale(0.95);
+}
+
+.btnSecondary {
+  border: 1px solid var(--border-light);
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: var(--text-primary);
+}
+
+:global(.dark) .btnSecondary {
+  background-color: rgba(10, 15, 29, 0.5);
+}
+
+.btnSecondary:hover {
+  transform: scale(1.05);
+  background-color: var(--bg-tertiary);
+}
+
+.btnSecondary:active {
+  transform: scale(0.95);
+}
+
+.btnIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Panic Error View Styles */
+.panicContainer {
+  background-color: #050505 !important;
+}
+
+:global(.dark) .panicContainer {
+  background-color: #030303 !important;
+}
+
+.codeBackground {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: rgba(239, 68, 68, 0.4);
+  pointer-events: none;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: none;
+}
+
+:global(.dark) .codeBackground {
+  color: rgba(239, 68, 68, 0.6);
+}
+
+.codeLine {
+  line-height: 1.5;
+  margin-top: 0.2rem;
+  opacity: 0.8;
+}
+
+.panicCard {
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.25) !important;
+}
