@@ -158,6 +158,8 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
             StarterKit.configure({
                 paragraph: false,
                 heading: false,
+                link: false,
+                underline: false,
             }),
             CustomParagraph,
             CustomHeading,
