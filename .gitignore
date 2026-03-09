@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ignore Conductor files (specs, plans, tracks) from Gemini CLI extension
+conductor/
+conductor/*.md
+conductor/tracks/
+conductor/workflow.md
+conductor/tracks.md

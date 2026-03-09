@@ -53,10 +53,11 @@ export default async function ProfilePage() {
         isVerified: true,
         followersCount: followersRes?.count || 0,
         joinedAt: joinedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-        bio: user.aboutMe || "This user is way too lazy to set up their bio... what a slacker. 😎",
+        bio: user.shortBio || "This user is way too lazy to set up their bio... what a slacker. 😎",
         isOwner: true,
         id: user.id,
-        isFollowing: false
+        isFollowing: false,
+        pinnedCharacterId: user.pinnedCharacterId
     };
 
     const rawCharacters = await db.select({

@@ -261,6 +261,40 @@ export async function updateBannerAction(prevState: any, formData: FormData) {
     }
 }
 
+export async function updateShortBioAction(shortBio: string) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { error: "You must be logged in.", success: false };
+
+        await db.update(users)
+            .set({ shortBio })
+            .where(eq(users.id, session.user.id));
+
+        revalidatePath("/profile");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update short bio:", error);
+        return { error: "An unexpected error occurred.", success: false };
+    }
+}
+
+export async function pinCharacterAction(characterId: string | null) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { error: "You must be logged in.", success: false };
+
+        await db.update(users)
+            .set({ pinnedCharacterId: characterId })
+            .where(eq(users.id, session.user.id));
+
+        revalidatePath("/profile");
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to pin character:", error);
+        return { error: "An unexpected error occurred.", success: false };
+    }
+}
+
 export async function deleteAvatarAction() {
     try {
         const session = await auth();

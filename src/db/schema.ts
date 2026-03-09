@@ -12,6 +12,8 @@ export const users = sqliteTable("user", {
     image: text("image"),
     bannerUrl: text("banner_url"),
     aboutMe: text("about_me"),
+    shortBio: text("short_bio"),
+    pinnedCharacterId: text("pinned_character_id"),
     appearance: text("appearance"),
 });
 

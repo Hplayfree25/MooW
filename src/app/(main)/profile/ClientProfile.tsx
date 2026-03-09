@@ -11,7 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "@/lib/cropImage";
 import { toast } from "sonner";
-import { updateAvatarAction, updateBannerAction } from "../settings/actions";
+import { updateAvatarAction, updateBannerAction, updateShortBioAction, pinCharacterAction } from "../settings/actions";
 import { toggleFollowAction } from "../actions";
 
 interface UserProfile {
@@ -26,6 +26,7 @@ interface UserProfile {
     isOwner: boolean;
     id: string;
     isFollowing: boolean;
+    pinnedCharacterId?: string | null;
 }
 
 interface Badge {
@@ -61,6 +62,34 @@ export default function ClientProfile({ user, badges, characters }: { user: User
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
     const [isCompressing, setIsCompressing] = useState(false);
     const [originalFile, setOriginalFile] = useState<File | null>(null);
+
+    const [bioText, setBioText] = useState(user.bio);
+    const [pinnedCharId, setPinnedCharId] = useState(user.pinnedCharacterId);
+
+    const toggleEdit = async () => {
+        if (isEditing && bioText !== user.bio) {
+            const res = await updateShortBioAction(bioText);
+            if (res.success) {
+                toast.success("Bio updated!");
+            } else {
+                toast.error("Failed to update bio");
+            }
+        }
+        setIsEditing(!isEditing);
+    };
+
+    const handlePin = async (e: React.MouseEvent, charId: string) => {
+        e.preventDefault();
+        const newPin = pinnedCharId === charId ? null : charId;
+        setPinnedCharId(newPin);
+        const res = await pinCharacterAction(newPin);
+        if (res?.success) {
+            toast.success(newPin ? "Character pinned!" : "Character unpinned!");
+        } else {
+            setPinnedCharId(pinnedCharId);
+            toast.error("Failed to pin character");
+        }
+    };
 
     const handleFollowToggle = async () => {
         setIsFollowing(!isFollowing);
@@ -130,6 +159,12 @@ export default function ClientProfile({ user, badges, characters }: { user: User
         }
     };
 
+    const sortedCharacters = [...characters].sort((a, b) => {
+        if (a.id === pinnedCharId) return -1;
+        if (b.id === pinnedCharId) return 1;
+        return 0;
+    });
+
     return (
         <div className={styles.container}>
             <input type="file" id="bannerInput" accept="image/*" style={{ display: 'none' }} onChange={(e) => onFileChange(e, "banner")} />
@@ -146,7 +181,7 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                         <button
                             className={`${styles.btnAction} ${isEditing ? styles.btnSave : styles.btnEdit}`}
                             title={isEditing ? "Save Profile" : "Edit Profile"}
-                            onClick={() => setIsEditing(!isEditing)}
+                            onClick={toggleEdit}
                         >
                             {isEditing ? "Done" : "Edit Profile"}
                         </button>
@@ -226,10 +261,20 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                         </div>
                     </div>
 
-                    {user.bio && (
-                        <div className={styles.bio}>
-                            {user.bio}
-                        </div>
+                    {isEditing ? (
+                        <textarea
+                            className={styles.bioTextarea}
+                            value={bioText}
+                            onChange={e => setBioText(e.target.value)}
+                            rows={3}
+                            placeholder="Write a short bio..."
+                        />
+                    ) : (
+                        bioText && (
+                            <div className={styles.bio}>
+                                {bioText}
+                            </div>
+                        )
                     )}
                 </div>
             </div>
@@ -253,16 +298,21 @@ export default function ClientProfile({ user, badges, characters }: { user: User
 
                 {activeTab === 'characters' && (
                     <div className={styles.characterGrid} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
-                        {characters.length === 0 ? (
+                        {sortedCharacters.length === 0 ? (
                             <div className={styles.emptyState} style={{ gridColumn: '1 / -1' }}>
                                 <LayoutGrid size={32} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
                                 <p>No characters created yet.</p>
                             </div>
                         ) : (
-                            characters.map((char, index) => (
+                            sortedCharacters.map((char, index) => (
                                 <div key={char.id} style={{ position: 'relative' }}>
                                     <Link href={`/character/${char.id}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
                                         <div className={styles.characterCard}>
+                                            {pinnedCharId === char.id && (
+                                                <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', backgroundColor: 'var(--accent-primary)', color: '#fff', fontSize: '0.7rem', padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)', zIndex: 10, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                    <Pin size={12} fill="currentColor" /> Pinned
+                                                </div>
+                                            )}
                                             {char.imageUrl ? (
                                                 <div className={styles.cardAvatar} style={{ backgroundImage: `url(${char.imageUrl})` }} />
                                             ) : (
@@ -277,9 +327,7 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                                                     </div>
                                                 </div>
 
-                                                <div className={styles.cardBio}>
-                                                    {char.characterBio}
-                                                </div>
+                                                <div className={styles.cardBio} dangerouslySetInnerHTML={{ __html: char.characterBio }} />
 
                                                 <div className={styles.cardTags}>
                                                     {char.tags && char.tags.slice(0, 3).map((tag: string) => (
@@ -308,13 +356,11 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                                     {isEditing && (
                                         <button
                                             className={styles.pinBtn}
-                                            title="Pin Character"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                alert("Pin feature coming soon!");
-                                            }}
+                                            title={pinnedCharId === char.id ? "Unpin Character" : "Pin Character"}
+                                            onClick={(e) => handlePin(e, char.id)}
+                                            style={pinnedCharId === char.id ? { backgroundColor: 'var(--accent-primary)', color: '#fff' } : {}}
                                         >
-                                            <Pin size={16} />
+                                            <Pin size={16} fill={pinnedCharId === char.id ? "currentColor" : "none"} />
                                         </button>
                                     )}
                                 </div>
@@ -399,3 +445,4 @@ export default function ClientProfile({ user, badges, characters }: { user: User
         </div>
     );
 }
+

@@ -181,6 +181,25 @@
     white-space: pre-wrap;
 }
 
+.bioTextarea {
+    width: 100%;
+    background-color: var(--bg-secondary, #1a1a24);
+    color: var(--text-primary, #fff);
+    border: 1px solid var(--border-light, #333);
+    border-radius: var(--radius-md, 8px);
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-top: 0.25rem;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.bioTextarea:focus {
+    outline: none;
+    border-color: var(--accent-primary, #3b82f6);
+}
+
 .meta {
     display: flex;
     flex-wrap: wrap;
@@ -420,6 +439,16 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex: 1;
+}
+
+.cardBio > * {
+    margin: 0;
+    padding: 0;
+    display: inline;
+}
+
+.cardBio p {
+    margin-bottom: 0.25rem;
 }
 
 .cardTags {
