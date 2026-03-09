@@ -177,6 +177,90 @@ export async function updateAvatarAction(prevState: any, formData: FormData) {
     }
 }
 
+export async function updateBannerAction(prevState: any, formData: FormData) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { error: "You must be logged in.", success: false };
+
+        const imageFile = formData.get("image") as File;
+        const cropDataStr = formData.get("cropData") as string;
+
+        if (!imageFile || imageFile.size === 0) {
+            return { error: "No image file provided.", success: false };
+        }
+
+        const { v2: cloudinary } = await import("cloudinary");
+        cloudinary.config({
+            cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
+
+        const [base64Image, [currentUser]] = await Promise.all([
+            imageFile.arrayBuffer().then(ab => {
+                const buffer = Buffer.from(ab);
+                return `data:${imageFile.type};base64,${buffer.toString('base64')}`;
+            }),
+            db.select({ bannerUrl: users.bannerUrl }).from(users).where(eq(users.id, session.user.id)).limit(1)
+        ]);
+
+        const oldImageUrl = currentUser?.bannerUrl;
+
+        let transformation: any[] = [];
+        let formatExt: "gif" | undefined = undefined;
+
+        if (cropDataStr) {
+            try {
+                const cropData = JSON.parse(cropDataStr);
+                transformation = [
+                    { x: Math.round(cropData.x), y: Math.round(cropData.y), width: Math.round(cropData.width), height: Math.round(cropData.height), crop: "crop" },
+                    { width: 1200, height: 400, crop: "fill", gravity: "center" }
+                ];
+                if (imageFile.type === "image/gif") formatExt = "gif";
+            } catch (e) {
+                console.error("Invalid crop data", e);
+            }
+        } else {
+            transformation = [{ width: 1200, height: 400, crop: "fill", gravity: "center" }];
+        }
+
+        const uploadResponse = await cloudinary.uploader.upload(base64Image, {
+            folder: "banners",
+            resource_type: "auto",
+            format: formatExt,
+            transformation: transformation,
+            quality: "auto"
+        });
+
+        const newImageUrl = uploadResponse.secure_url;
+
+        const dbUpdatePromise = db.update(users)
+            .set({ bannerUrl: newImageUrl })
+            .where(eq(users.id, session.user.id));
+
+        const deleteOldPromise = oldImageUrl
+            ? Promise.resolve().then(async () => {
+                const oldPublicId = extractCloudinaryPublicId(oldImageUrl);
+                if (oldPublicId) {
+                    try {
+                        await cloudinary.uploader.destroy(oldPublicId, { resource_type: "image", invalidate: true });
+                    } catch (delErr) {
+                        console.warn("Failed to delete old banner from Cloudinary:", delErr);
+                    }
+                }
+            })
+            : Promise.resolve();
+
+        await Promise.all([dbUpdatePromise, deleteOldPromise]);
+
+        revalidatePath("/profile");
+        return { success: true };
+    } catch (error: any) {
+        console.error("Failed to update banner:", error);
+        return { error: "Failed to upload banner.", success: false };
+    }
+}
+
 export async function deleteAvatarAction() {
     try {
         const session = await auth();

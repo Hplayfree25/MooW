@@ -71,6 +71,7 @@
     right: 1rem;
     display: flex;
     gap: 0.5rem;
+    z-index: 30;
 }
 
 .btnAction {
@@ -110,7 +111,6 @@
     gap: 0.5rem;
     align-items: center;
     margin-top: 0.5rem;
-    /* Space it down slightly from the banner */
     position: relative;
 }
 
@@ -444,4 +444,69 @@
     border-radius: var(--radius-md, 8px);
     object-fit: cover;
     margin-bottom: 0.5rem;
+}
+
+.editOverlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    z-index: 10;
+}
+
+.editOverlay:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.editOverlayPfp {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.editOverlayPfp:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.btnSave {
+    background-color: var(--text-primary, #ffffff);
+    color: var(--bg-primary, #000000);
+    border: none;
+}
+
+.btnSave:hover {
+    opacity: 0.9;
+}
+
+.pinBtn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.pinBtn:hover {
+    background-color: var(--accent-primary, #3b82f6);
 }

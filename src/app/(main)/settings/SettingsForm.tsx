@@ -103,6 +103,7 @@ function AvatarUploader({ user }: { user: any }) {
 
             if (originalFile && originalFile.type === "image/gif") {
                 formData.append("image", originalFile);
+                formData.append("cropData", JSON.stringify(croppedAreaPixels));
             } else {
                 const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
                 formData.append("image", croppedBlob, "avatar.webp");
