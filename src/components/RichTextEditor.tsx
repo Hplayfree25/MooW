@@ -281,7 +281,7 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
     };
 
     return (
-        <div className={styles.editorContainer}>
+        <div className={`${styles.editorContainer} ${readOnly ? styles.readOnly : ''}`}>
             <input type="hidden" name={name} value={markdownContent} />
 
             {!readOnly && (
@@ -468,7 +468,7 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
                 </div>
             )}
 
-            <div className={styles.editorBody} style={{ padding: readOnly ? 0 : '', border: readOnly ? 'none' : '' }}>
+            <div className={styles.editorBody}>
                 {viewMode === "visual" ? (
                     <EditorContent editor={editor} className={styles.tiptapEditor} />
                 ) : (

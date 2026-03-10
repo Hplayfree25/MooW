@@ -8,6 +8,19 @@
     min-width: 0;
 }
 
+.editorContainer.readOnly {
+    border: none;
+    background-color: transparent;
+}
+
+.editorContainer.readOnly .editorBody {
+    min-height: auto;
+}
+
+.editorContainer.readOnly .tiptapEditor {
+    padding: 0;
+}
+
 .toolbar {
     display: flex;
     align-items: center;
@@ -210,8 +223,7 @@
 }
 
 .tiptapEditor img {
-    max-width: 100% !important;
-    height: auto;
+    max-width: 100%;
 }
 
 .tiptapEditor a {
@@ -234,6 +246,10 @@
 .tiptapEditor :global(.ProseMirror) {
     outline: none;
     min-height: 250px;
+}
+
+.editorContainer.readOnly .tiptapEditor :global(.ProseMirror) {
+    min-height: auto;
 }
 
 .tiptapEditor :global(.ProseMirror p.is-editor-empty:first-child::before) {
