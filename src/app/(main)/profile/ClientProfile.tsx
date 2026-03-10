@@ -89,6 +89,7 @@ interface UserProfile {
     id: string;
     isFollowing: boolean;
     pinnedCharacterId?: string | null;
+    aboutMe: string;
 }
 
 interface Badge {
@@ -112,7 +113,7 @@ interface Character {
 }
 
 export default function ClientProfile({ user, badges, characters }: { user: UserProfile, badges: Badge[], characters: Character[] }) {
-    const [activeTab, setActiveTab] = useState<"characters" | "badges">("characters");
+    const [activeTab, setActiveTab] = useState<"about" | "characters" | "badges">("about");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isFollowing, setIsFollowing] = useState(user.isFollowing);
     const [followerCount, setFollowerCount] = useState(user.followersCount);
@@ -346,6 +347,12 @@ export default function ClientProfile({ user, badges, characters }: { user: User
 
                 <div className={styles.tabs}>
                     <button
+                        className={`${styles.tabBtn} ${activeTab === 'about' ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('about')}
+                    >
+                        About me
+                    </button>
+                    <button
                         className={`${styles.tabBtn} ${activeTab === 'characters' ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('characters')}
                     >
@@ -358,6 +365,27 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                         Badge Collection
                     </button>
                 </div>
+
+                {activeTab === 'about' && (
+                    <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', marginTop: '1rem' }}>
+                        {user.aboutMe ? (
+                            <div className={styles.markdownBio}>
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
+                                    components={markdownComponents}
+                                >
+                                    {user.aboutMe}
+                                </ReactMarkdown>
+                            </div>
+                        ) : (
+                            <div className={styles.emptyState}>
+                                <LayoutGrid size={32} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                                <p>No about me information provided yet.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {activeTab === 'characters' && (
                     <div className={styles.characterGrid} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>

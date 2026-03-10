@@ -57,7 +57,8 @@ export default async function ProfilePage() {
         isOwner: true,
         id: user.id,
         isFollowing: false,
-        pinnedCharacterId: user.pinnedCharacterId
+        pinnedCharacterId: user.pinnedCharacterId,
+        aboutMe: user.aboutMe || ""
     };
 
     const rawCharacters = await db.select({

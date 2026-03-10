@@ -66,7 +66,9 @@ export default async function PublicProfilePage(props: { params: Promise<{ usern
         bio: user.shortBio || "This user is way too lazy to set up their bio... what a slacker. 😎",
         isOwner: user.id === session?.user?.id,
         id: user.id,
-        isFollowing
+        isFollowing,
+        pinnedCharacterId: user.pinnedCharacterId,
+        aboutMe: user.aboutMe || ""
     };
 
     const rawCharacters = await db.select({

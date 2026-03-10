@@ -240,6 +240,7 @@
     overflow: hidden;
     color: var(--text-secondary);
     border: 2px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .avatarCircle img {

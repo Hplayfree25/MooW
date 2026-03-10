@@ -11,7 +11,7 @@ import ImageResize from 'tiptap-extension-resize-image';
 import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
 import { Markdown } from 'tiptap-markdown';
-import { useState, useRef, useEffect, useReducer } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Paragraph from '@tiptap/extension-paragraph';
 import Heading from '@tiptap/extension-heading';
 import { MediaLibraryModal } from './MediaLibraryModal';
@@ -146,10 +146,41 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
     const colorBtnRef = useRef<HTMLButtonElement>(null);
     const [isHighlightOpen, setIsHighlightOpen] = useState(false);
     const highlightBtnRef = useRef<HTMLButtonElement>(null);
-    const [, forceUpdate] = useReducer(x => x + 1, 0);
+    const [activeMarks, setActiveMarks] = useState<Record<string, boolean>>({});
     const [toolbarColor, setToolbarColor] = useState('#000000');
     const [highlightColor, setHighlightColor] = useState('#ffff00');
     const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const syncToolbar = (ed: any) => {
+        setActiveMarks({
+            bold: ed.isActive('bold'),
+            italic: ed.isActive('italic'),
+            underline: ed.isActive('underline'),
+            strike: ed.isActive('strike'),
+            code: ed.isActive('code'),
+            heading: ed.isActive('heading'),
+            h1: ed.isActive('heading', { level: 1 }),
+            h2: ed.isActive('heading', { level: 2 }),
+            h3: ed.isActive('heading', { level: 3 }),
+            paragraph: ed.isActive('paragraph'),
+            textStyle: ed.isActive('textStyle'),
+            highlight: ed.isActive('highlight'),
+            alignLeft: ed.isActive({ textAlign: 'left' }),
+            alignCenter: ed.isActive({ textAlign: 'center' }),
+            alignRight: ed.isActive({ textAlign: 'right' }),
+            bulletList: ed.isActive('bulletList'),
+            orderedList: ed.isActive('orderedList'),
+            blockquote: ed.isActive('blockquote'),
+            spoiler: ed.isActive('spoiler'),
+            codeBlock: ed.isActive('codeBlock'),
+            link: ed.isActive('link'),
+        });
+        if (ed.isActive('textStyle')) {
+            setToolbarColor(ed.getAttributes('textStyle').color || '#000000');
+        } else {
+            setToolbarColor('#000000');
+        }
+    };
 
     const editor = useEditor({
         editable: !readOnly,
@@ -175,6 +206,7 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
         ],
         content: content || defaultValue,
         onUpdate: ({ editor }: any) => {
+            syncToolbar(editor);
             if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
             updateTimeoutRef.current = setTimeout(() => {
                 const md = (editor.storage as any).markdown.getMarkdown();
@@ -183,21 +215,17 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
             }, 300);
         },
         onTransaction: ({ editor }: any) => {
-            forceUpdate();
-            if (editor.isActive('textStyle')) {
-                setToolbarColor(editor.getAttributes('textStyle').color || '#000000');
-            } else {
-                setToolbarColor('#000000');
-            }
+            syncToolbar(editor);
         },
         onSelectionUpdate: ({ editor }: any) => {
-            forceUpdate();
-            if (editor.isActive('textStyle')) {
-                setToolbarColor(editor.getAttributes('textStyle').color || '#000000');
-            } else {
-                setToolbarColor('#000000');
-            }
-        }
+            syncToolbar(editor);
+        },
+        onFocus: ({ editor }: any) => {
+            syncToolbar(editor);
+        },
+        onBlur: ({ editor }: any) => {
+            syncToolbar(editor);
+        },
     });
 
     useEffect(() => {
@@ -249,21 +277,15 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
             editor.view.dispatch(editor.state.tr.removeStoredMark(editor.schema.marks.link));
         }
         editor.chain().focus().run();
-        forceUpdate();
+        syncToolbar(editor);
     };
-
-    const currentHeading = editor.isActive('heading', { level: 1 }) ? 'H1'
-        : editor.isActive('heading', { level: 2 }) ? 'H2'
-            : editor.isActive('heading', { level: 3 }) ? 'H3'
-                : editor.isActive('heading', { level: 4 }) ? 'H4'
-                    : 'Paragraph';
 
     return (
         <div className={styles.editorContainer}>
             <input type="hidden" name={name} value={markdownContent} />
 
             {!readOnly && (
-                <div className={styles.toolbar}>
+                <div className={styles.toolbar} onMouseDown={e => e.preventDefault()}>
                     {/* Kepala dari toolbar */}
                     {variant !== "simple" && (
                         <div style={{ position: 'relative' }}>
@@ -271,12 +293,12 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
                                 type="button"
                                 ref={headBtnRef}
                                 onClick={() => setIsHeadingsOpen(!isHeadingsOpen)}
-                                className={`${styles.iconBtn} ${(editor.isActive('heading') || editor.isActive('paragraph')) ? styles.active : ''}`}
+                                className={`${styles.iconBtn} ${(activeMarks.heading || activeMarks.paragraph) ? styles.active : ''}`}
                                 title="Format"
                             >
-                                {editor.isActive('heading', { level: 1 }) ? <Heading1 size={16} /> :
-                                    editor.isActive('heading', { level: 2 }) ? <Heading2 size={16} /> :
-                                        editor.isActive('heading', { level: 3 }) ? <Heading3 size={16} /> :
+                                {activeMarks.h1 ? <Heading1 size={16} /> :
+                                    activeMarks.h2 ? <Heading2 size={16} /> :
+                                        activeMarks.h3 ? <Heading3 size={16} /> :
                                             <TextQuote size={16} />}
                             </button>
                             <Popover isOpen={isHeadingsOpen} onClose={() => setIsHeadingsOpen(false)} anchorRef={headBtnRef}>
@@ -293,11 +315,11 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
                     <div className={styles.divider} />
 
                     {/* Ini tuh text formating cok */}
-                    <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={`${styles.iconBtn} ${editor.isActive('bold') ? styles.active : ''}`} title="Bold"><Bold size={16} /></button>
-                    <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={`${styles.iconBtn} ${editor.isActive('italic') ? styles.active : ''}`} title="Italic"><Italic size={16} /></button>
-                    <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className={`${styles.iconBtn} ${editor.isActive('underline') ? styles.active : ''}`} title="Underline"><UnderlineIcon size={16} /></button>
-                    <button type="button" onClick={() => editor.chain().focus().toggleStrike().run()} className={`${styles.iconBtn} ${editor.isActive('strike') ? styles.active : ''}`} title="Strikethrough"><Strikethrough size={16} /></button>
-                    <button type="button" onClick={() => editor.chain().focus().toggleCode().run()} className={`${styles.iconBtn} ${editor.isActive('code') ? styles.active : ''}`} title="Inline Code"><Code size={16} /></button>
+                    <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={`${styles.iconBtn} ${activeMarks.bold ? styles.active : ''}`} title="Bold"><Bold size={16} /></button>
+                    <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={`${styles.iconBtn} ${activeMarks.italic ? styles.active : ''}`} title="Italic"><Italic size={16} /></button>
+                    <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className={`${styles.iconBtn} ${activeMarks.underline ? styles.active : ''}`} title="Underline"><UnderlineIcon size={16} /></button>
+                    <button type="button" onClick={() => editor.chain().focus().toggleStrike().run()} className={`${styles.iconBtn} ${activeMarks.strike ? styles.active : ''}`} title="Strikethrough"><Strikethrough size={16} /></button>
+                    <button type="button" onClick={() => editor.chain().focus().toggleCode().run()} className={`${styles.iconBtn} ${activeMarks.code ? styles.active : ''}`} title="Inline Code"><Code size={16} /></button>
 
                     {variant !== "simple" && (
                         <>
@@ -306,7 +328,7 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
                                     type="button"
                                     ref={colorBtnRef}
                                     onClick={() => setIsColorOpen(!isColorOpen)}
-                                    className={`${styles.iconBtn} ${editor.isActive('textStyle') ? styles.active : ''}`}
+                                    className={`${styles.iconBtn} ${activeMarks.textStyle ? styles.active : ''}`}
                                     title="Text Color"
                                 >
                                     <TypeIcon size={16} />
@@ -349,7 +371,7 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
                                     type="button"
                                     ref={highlightBtnRef}
                                     onClick={() => setIsHighlightOpen(!isHighlightOpen)}
-                                    className={`${styles.iconBtn} ${editor.isActive('highlight') ? styles.active : ''}`}
+                                    className={`${styles.iconBtn} ${activeMarks.highlight ? styles.active : ''}`}
                                     title="Highlight"
                                 >
                                     <Highlighter size={16} />
@@ -389,9 +411,9 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
 
                             <div className={styles.divider} />
 
-                            <button type="button" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={`${styles.iconBtn} ${(editor.isActive({ textAlign: 'left' }) || (!editor.isActive({ textAlign: 'center' }) && !editor.isActive({ textAlign: 'right' }))) ? styles.active : ''}`} title="Align Left"><AlignLeft size={16} /></button>
-                            <button type="button" onClick={() => editor.chain().focus().setTextAlign('center').run()} className={`${styles.iconBtn} ${editor.isActive({ textAlign: 'center' }) ? styles.active : ''}`} title="Align Center"><AlignCenter size={16} /></button>
-                            <button type="button" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={`${styles.iconBtn} ${editor.isActive({ textAlign: 'right' }) ? styles.active : ''}`} title="Align Right"><AlignRight size={16} /></button>
+                            <button type="button" onClick={() => editor.chain().focus().setTextAlign('left').run()} className={`${styles.iconBtn} ${(activeMarks.alignLeft || (!activeMarks.alignCenter && !activeMarks.alignRight)) ? styles.active : ''}`} title="Align Left"><AlignLeft size={16} /></button>
+                            <button type="button" onClick={() => editor.chain().focus().setTextAlign('center').run()} className={`${styles.iconBtn} ${activeMarks.alignCenter ? styles.active : ''}`} title="Align Center"><AlignCenter size={16} /></button>
+                            <button type="button" onClick={() => editor.chain().focus().setTextAlign('right').run()} className={`${styles.iconBtn} ${activeMarks.alignRight ? styles.active : ''}`} title="Align Right"><AlignRight size={16} /></button>
 
                             <div className={styles.divider} />
                         </>
@@ -399,18 +421,18 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
 
                     {variant !== "simple" && (
                         <>
-                            <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`${styles.iconBtn} ${editor.isActive('bulletList') ? styles.active : ''}`} title="Bullet List"><List size={16} /></button>
-                            <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`${styles.iconBtn} ${editor.isActive('orderedList') ? styles.active : ''}`} title="Numbered List"><ListOrdered size={16} /></button>
-                            <button type="button" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={`${styles.iconBtn} ${editor.isActive('blockquote') ? styles.active : ''}`} title="Quote"><Quote size={16} /></button>
+                            <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`${styles.iconBtn} ${activeMarks.bulletList ? styles.active : ''}`} title="Bullet List"><List size={16} /></button>
+                            <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`${styles.iconBtn} ${activeMarks.orderedList ? styles.active : ''}`} title="Numbered List"><ListOrdered size={16} /></button>
+                            <button type="button" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={`${styles.iconBtn} ${activeMarks.blockquote ? styles.active : ''}`} title="Quote"><Quote size={16} /></button>
                         </>
                     )}
 
-                    <button type="button" onClick={() => (editor.chain().focus() as any).toggleSpoiler().run()} className={`${styles.iconBtn} ${editor.isActive('spoiler') ? styles.active : ''}`} title="Spoiler"><EyeOff size={16} /></button>
-                    <button type="button" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={`${styles.iconBtn} ${editor.isActive('codeBlock') ? styles.active : ''}`} title="Code Block"><Braces size={16} /></button>
+                    <button type="button" onClick={() => (editor.chain().focus() as any).toggleSpoiler().run()} className={`${styles.iconBtn} ${activeMarks.spoiler ? styles.active : ''}`} title="Spoiler"><EyeOff size={16} /></button>
+                    <button type="button" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={`${styles.iconBtn} ${activeMarks.codeBlock ? styles.active : ''}`} title="Code Block"><Braces size={16} /></button>
 
                     {variant !== "simple" && <div className={styles.divider} />}
 
-                    <button type="button" ref={linkBtnRef} onClick={toggleLink} className={`${styles.iconBtn} ${editor.isActive('link') ? styles.active : ''}`} title="Link"><Link2 size={16} /></button>
+                    <button type="button" ref={linkBtnRef} onClick={toggleLink} className={`${styles.iconBtn} ${activeMarks.link ? styles.active : ''}`} title="Link"><Link2 size={16} /></button>
                     <Popover isOpen={isLinkOpen} onClose={() => setIsLinkOpen(false)} anchorRef={linkBtnRef}>
                         <div className={styles.linkPopover}>
                             <input type="url" placeholder="Enter URL" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} autoFocus className={styles.linkInput} />
