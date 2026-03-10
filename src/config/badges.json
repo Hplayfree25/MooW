@@ -11,7 +11,7 @@
         "id": 2,
         "name": "Staff",
         "description": "Verified developer and core team member of Moow AI.",
-        "iconUrl": "/iconsb/staff.svg",
+        "iconUrl": "/iconsb/staff.png",
         "rarity": "Mythical",
         "condition": "Manual grant to developers."
     },

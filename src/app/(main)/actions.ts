@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { db, dbChat } from "@/db";
-import { characters, characterComments, commentReactions, users, characterLikes, follows } from "@/db/schema";
+import { characters, characterComments, commentReactions, users, characterLikes, follows, userBadges } from "@/db/schema";
 import { chats } from "@/db/schema.logs";
 import { desc, eq, sql, getTableColumns, and, inArray } from "drizzle-orm";
 import { v2 as cloudinary } from "cloudinary";
@@ -103,7 +103,7 @@ export async function getCharactersAction(limit: number = 15, offset: number = 0
             const enrichedChars = chars.map(c => ({
                 ...c,
                 chatCount: countMap.get(c.id) || 0,
-                likesCount: (c.likesCount || 0) + c.dbLikesCount // Combining buffer + real relations
+                likesCount: (c.likesCount || 0) + c.dbLikesCount
             }));
 
             return { success: true, data: enrichedChars };
@@ -151,9 +151,13 @@ export async function getCharacterByIdAction(id: string) {
 
         let hasLiked = false;
         let isOwner = false;
+        let isCurrentUserStaff = false;
         if (userId) {
             const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
             isOwner = char[0].creatorId === user?.username;
+
+            const [staffBadge] = await db.select().from(userBadges).where(and(eq(userBadges.userId, userId), eq(userBadges.badgeId, 2))).limit(1);
+            isCurrentUserStaff = !!staffBadge;
 
             const [like] = await db.select()
                 .from(characterLikes)
@@ -192,18 +196,33 @@ export async function getCharacterByIdAction(id: string) {
             }
         }
 
+        const allUserIds = [...new Set(rawComments.map((r: any) => r.comment.userId).filter(Boolean))];
+        const userBadgesData = allUserIds.length > 0
+            ? await db.select().from(userBadges).where(inArray(userBadges.userId, allUserIds as string[]))
+            : [];
+
+        const badgesMap: Record<string, number[]> = {};
+        for (const ub of userBadgesData) {
+            if (!badgesMap[ub.userId]) badgesMap[ub.userId] = [];
+            badgesMap[ub.userId].push(ub.badgeId);
+        }
+
         const comments = rawComments.map((row: any) => {
             const commentReactionsObj = reactionMap[row.comment.id] || {};
             const sortedReactions = Object.entries(commentReactionsObj)
                 .map(([type, count]) => ({ type, count }))
-                .sort((a, b) => b.count - a.count);
+                .sort((a, b) => (b.count as number) - (a.count as number));
+
+            const commentUserBadges = row.comment.userId ? (badgesMap[row.comment.userId] || []) : [];
 
             return {
                 ...row.comment,
                 userName: row.userName || "Anonymous",
                 userImageUrl: row.userImage,
                 userReaction: userReactionMap[row.comment.id] || null,
-                reactions: sortedReactions
+                reactions: sortedReactions,
+                isStaff: commentUserBadges.includes(2),
+                isVerified: commentUserBadges.includes(3)
             };
         });
 
@@ -214,7 +233,7 @@ export async function getCharacterByIdAction(id: string) {
         const bufferedLikesStr = await redis.get(CACHE_KEYS.CHARACTER_LIKES_BUFFER(id));
         const bufferedLikes = bufferedLikesStr ? parseInt(bufferedLikesStr as string, 10) : 0;
 
-        return { success: true, data: { ...char[0], hasLiked, isOwner, likesCount: (char[0].likesCount || 0) + bufferedLikes }, comments };
+        return { success: true, data: { ...char[0], hasLiked, isOwner, isCurrentUserStaff, currentUserId: userId, likesCount: (char[0].likesCount || 0) + bufferedLikes }, comments };
     } catch (error) {
         console.error("Failed to fetch character details:", error);
         return { success: false, error: "Failed to fetch character details" };
@@ -339,7 +358,9 @@ export async function deleteCharacterAction(id: string) {
         const [char] = await db.select().from(characters).where(eq(characters.id, id)).limit(1);
         if (!char) return { success: false, error: "Character not found" };
 
-        if (char.creatorId !== user.username) {
+        const [isStaff] = await db.select().from(userBadges).where(and(eq(userBadges.userId, user.id), eq(userBadges.badgeId, 2))).limit(1);
+
+        if (char.creatorId !== user.username && !isStaff) {
             return { success: false, error: "Unauthorized" };
         }
 
@@ -439,6 +460,114 @@ export async function toggleFollowAction(targetUserId: string) {
         }
     } catch (error) {
         console.error("Failed to toggle follow status:", error);
+        return { success: false, error: "An error occurred" };
+    }
+}
+
+export async function deleteCommentAction(commentId: string) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+        const [user] = await db.select().from(users).where(eq(users.id, session.user.id)).limit(1);
+        if (!user) return { success: false, error: "User not found" };
+
+        const [comment] = await db.select().from(characterComments).where(eq(characterComments.id, commentId)).limit(1);
+        if (!comment) return { success: false, error: "Comment not found" };
+
+        const [isStaff] = await db.select().from(userBadges).where(and(eq(userBadges.userId, user.id), eq(userBadges.badgeId, 2))).limit(1);
+
+        if (comment.userId !== user.id && !isStaff) {
+            return { success: false, error: "Unauthorized" };
+        }
+
+        await db.delete(characterComments).where(eq(characterComments.id, commentId));
+
+        const cacheKey = CACHE_KEYS.CHARACTER_DATA(comment.characterId);
+        await redis.del(cacheKey);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete comment:", error);
+        return { success: false, error: "Failed to delete comment" };
+    }
+}
+
+export async function banUserAction(username: string, value: boolean) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+        const [isStaff] = await db.select().from(userBadges).where(and(eq(userBadges.userId, session.user.id), eq(userBadges.badgeId, 2))).limit(1);
+        if (!isStaff) return { success: false, error: "Unauthorized" };
+
+        const [targetUser] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+        if (!targetUser) return { success: false, error: "Target user not found" };
+
+        await db.update(users).set({ isBanned: value }).where(eq(users.id, targetUser.id));
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to ban user:", error);
+        return { success: false, error: "An error occurred" };
+    }
+}
+
+export async function grantBadgeAction(username: string, badgeId: number, revoke: boolean = false) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+        const [isStaff] = await db.select().from(userBadges).where(and(eq(userBadges.userId, session.user.id), eq(userBadges.badgeId, 2))).limit(1);
+        if (!isStaff) return { success: false, error: "Unauthorized" };
+
+        const [targetUser] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+        if (!targetUser) return { success: false, error: "Target user not found" };
+
+        if (revoke) {
+            await db.delete(userBadges).where(and(eq(userBadges.userId, targetUser.id), eq(userBadges.badgeId, badgeId)));
+        } else {
+            // Use explicit insert to avoid IGNORE on sqlite directly returning array error, or check existing
+            const [existing] = await db.select().from(userBadges).where(and(eq(userBadges.userId, targetUser.id), eq(userBadges.badgeId, badgeId))).limit(1);
+            if (!existing) {
+                await db.insert(userBadges).values({ userId: targetUser.id, badgeId });
+            }
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to grant/revoke badge:", error);
+        return { success: false, error: "An error occurred" };
+    }
+}
+
+export async function toggleBadgeDisplayAction(badgeId: number, isDisplayed: boolean) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+        const [user] = await db.select().from(users).where(eq(users.id, session.user.id)).limit(1);
+        if (!user) return { success: false, error: "User not found" };
+
+        if (isDisplayed) {
+            const currentDisplayed = await db.select()
+                .from(userBadges)
+                .where(and(eq(userBadges.userId, user.id), eq(userBadges.isDisplayed, true)));
+
+            if (currentDisplayed.length >= 3) {
+                return { success: false, error: "You can only display up to 3 badges at maximum on your profile." };
+            }
+        }
+
+        const [existing] = await db.select().from(userBadges).where(and(eq(userBadges.userId, user.id), eq(userBadges.badgeId, badgeId))).limit(1);
+        if (!existing) {
+            return { success: false, error: "You do not own this badge" };
+        }
+
+        await db.update(userBadges).set({ isDisplayed }).where(and(eq(userBadges.userId, user.id), eq(userBadges.badgeId, badgeId)));
+        return { success: true, isDisplayed };
+    } catch (error) {
+        console.error("Failed to toggle badge display:", error);
         return { success: false, error: "An error occurred" };
     }
 }

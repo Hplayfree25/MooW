@@ -21,12 +21,17 @@ export default async function ProfilePage() {
 
     const userBadgesRows = await db.select({
         badgeId: userBadges.badgeId,
+        isDisplayed: userBadges.isDisplayed
     })
         .from(userBadges)
         .where(eq(userBadges.userId, user.id));
 
     let userBadgesList = userBadgesRows
-        .map(row => getBadgeConfig(row.badgeId))
+        .map(row => {
+            const config = getBadgeConfig(row.badgeId);
+            if (config) return { ...config, isDisplayed: row.isDisplayed };
+            return undefined;
+        })
         .filter((b): b is NonNullable<typeof b> => b !== undefined);
 
     if (userBadgesList.length === 0) {
@@ -36,10 +41,10 @@ export default async function ProfilePage() {
                 badgeId: 1
             });
             const badgeConfig = getBadgeConfig(1);
-            if (badgeConfig) userBadgesList.push(badgeConfig);
+            if (badgeConfig) userBadgesList.push({ ...badgeConfig, isDisplayed: false });
         } catch {
             const badgeConfig = getBadgeConfig(1);
-            if (badgeConfig) userBadgesList.push(badgeConfig);
+            if (badgeConfig) userBadgesList.push({ ...badgeConfig, isDisplayed: false });
         }
     }
 
@@ -50,7 +55,8 @@ export default async function ProfilePage() {
         handle: user.username || `user_${user.id.substring(0, 6)}`,
         avatarUrl: user.image || "https://api.dicebear.com/7.x/notionists/svg?seed=fallback",
         bannerUrl: user.bannerUrl || "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=1000&auto=format&fit=crop",
-        isVerified: true,
+        isVerified: userBadgesList.some(b => b.id === 3),
+        isStaff: userBadgesList.some(b => b.id === 2),
         followersCount: followersRes?.count || 0,
         joinedAt: joinedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
         bio: user.shortBio || "This user is way too lazy to set up their bio... what a slacker. 😎",

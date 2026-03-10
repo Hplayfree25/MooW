@@ -15,6 +15,7 @@ export const users = sqliteTable("user", {
     shortBio: text("short_bio"),
     pinnedCharacterId: text("pinned_character_id"),
     appearance: text("appearance"),
+    isBanned: integer("is_banned", { mode: "boolean" }).default(false),
 });
 
 export const accounts = sqliteTable(
@@ -177,6 +178,7 @@ export const follows = sqliteTable('follows', {
 export const userBadges = sqliteTable('user_badges', {
     userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     badgeId: integer('badge_id').notNull(),
+    isDisplayed: integer('is_displayed', { mode: 'boolean' }).notNull().default(false),
     awardedAt: integer('awarded_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 }, (table) => ({
     compoundKey: primaryKey({ columns: [table.userId, table.badgeId] }),

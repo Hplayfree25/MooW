@@ -12,7 +12,7 @@ import Cropper from "react-easy-crop";
 import getCroppedImg from "@/lib/cropImage";
 import { toast } from "sonner";
 import { updateAvatarAction, updateBannerAction, updateShortBioAction, pinCharacterAction } from "../settings/actions";
-import { toggleFollowAction } from "../actions";
+import { toggleFollowAction, toggleBadgeDisplayAction } from "../actions";
 import { RichTextEditor } from "@/components/RichTextEditor";
 
 interface UserProfile {
@@ -26,6 +26,7 @@ interface UserProfile {
     bio: string;
     isOwner: boolean;
     id: string;
+    isStaff?: boolean;
     isFollowing: boolean;
     pinnedCharacterId?: string | null;
     aboutMe: string;
@@ -36,6 +37,7 @@ interface Badge {
     name: string;
     description: string;
     iconUrl: string;
+    isDisplayed?: boolean;
 }
 
 interface Character {
@@ -57,6 +59,7 @@ export default function ClientProfile({ user, badges, characters }: { user: User
     const [isFollowing, setIsFollowing] = useState(user.isFollowing);
     const [followerCount, setFollowerCount] = useState(user.followersCount);
     const [isEditing, setIsEditing] = useState(false);
+    const [localBadges, setLocalBadges] = useState(badges);
 
     const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
     const [cropType, setCropType] = useState<"avatar" | "banner" | null>(null);
@@ -110,6 +113,26 @@ export default function ClientProfile({ user, badges, characters }: { user: User
         if (count >= 1000000) return (count / 1000000).toFixed(1) + "M";
         if (count >= 1000) return (count / 1000).toFixed(1) + "K";
         return count.toString();
+    };
+
+    const handlePinBadge = async (badgeId: number, currentlyDisplayed: boolean) => {
+        if (!currentlyDisplayed) {
+            const displayedCount = localBadges.filter(b => b.isDisplayed).length;
+            if (displayedCount >= 3) {
+                toast.error("You can only display up to 3 badges on your profile.");
+                return;
+            }
+        }
+
+        setLocalBadges(prev => prev.map(b => b.id === badgeId ? { ...b, isDisplayed: !currentlyDisplayed } : b));
+
+        const res = await toggleBadgeDisplayAction(badgeId, !currentlyDisplayed);
+        if (res?.success) {
+            toast.success(!currentlyDisplayed ? "Badge pinned to profile!" : "Badge unpinned.");
+        } else {
+            setLocalBadges(prev => prev.map(b => b.id === badgeId ? { ...b, isDisplayed: currentlyDisplayed } : b));
+            toast.error(res?.error || "Failed to toggle badge display");
+        }
     };
 
     const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "banner") => {
@@ -244,8 +267,13 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                     <div className={styles.unameWrap}>
                         <h1 className={styles.uname}>@{user.username}</h1>
                         {user.isVerified && (
-                            <div className={styles.badge} title="Verified">
+                            <div className={styles.badge} title="Verified Creator">
                                 <Check size={14} strokeWidth={3} />
+                            </div>
+                        )}
+                        {user.isStaff && (
+                            <div className={styles.staffBadge} title="Staff">
+                                STAFF
                             </div>
                         )}
                     </div>
@@ -278,6 +306,14 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                                 {bioText}
                             </div>
                         )
+                    )}
+
+                    {localBadges.filter(b => b.isDisplayed && b.id !== 2 && b.id !== 3).length > 0 && (
+                        <div className={styles.profileBadgesDisplay}>
+                            {localBadges.filter(b => b.isDisplayed && b.id !== 2 && b.id !== 3).slice(0, 3).map(badge => (
+                                <img key={badge.id} src={badge.iconUrl} alt={badge.name} title={badge.name} className={styles.profileBadgeIcon} />
+                            ))}
+                        </div>
                     )}
                 </div>
             </div>
@@ -397,19 +433,29 @@ export default function ClientProfile({ user, badges, characters }: { user: User
 
                 {activeTab === 'badges' && (
                     <div className={styles.gridContent}>
-                        {badges.length === 0 ? (
+                        {localBadges.length === 0 ? (
                             <div className={styles.emptyState} style={{ gridColumn: '1 / -1' }}>
                                 <Award size={32} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
                                 <p>No badges collected yet.</p>
                             </div>
                         ) : (
-                            badges.map(badge => (
-                                <div key={badge.id} className={styles.cardItem}>
-                                    <div style={{ padding: '0.5rem', background: 'var(--bg-tertiary)', borderRadius: '50%', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <img src={badge.iconUrl} alt={badge.name} style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                            localBadges.map(badge => (
+                                <div key={badge.id} className={styles.cardItem} style={{ position: 'relative' }}>
+                                    {user.isOwner && badge.id !== 2 && badge.id !== 3 && (
+                                        <button
+                                            className={styles.pinBtn}
+                                            title={badge.isDisplayed ? "Unpin Badge" : "Pin Badge to Profile"}
+                                            onClick={(e) => { e.preventDefault(); handlePinBadge(badge.id, !!badge.isDisplayed); }}
+                                            style={badge.isDisplayed ? { backgroundColor: 'var(--accent-primary)', color: '#fff' } : {}}
+                                        >
+                                            <Pin size={16} fill={badge.isDisplayed ? "currentColor" : "none"} />
+                                        </button>
+                                    )}
+                                    <div style={{ padding: '0.1rem', background: 'var(--bg-tertiary)', borderRadius: '50%', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', overflow: 'hidden' }}>
+                                        <img src={badge.iconUrl} alt={badge.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                                     </div>
-                                    <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{badge.name}</span>
-                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{badge.description}</span>
+                                    <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)', textAlign: 'center' }}>{badge.name}</span>
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>{badge.description}</span>
                                 </div>
                             ))
                         )}

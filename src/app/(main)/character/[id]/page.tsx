@@ -9,7 +9,7 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
-import { getCharacterByIdAction, likeCharacterAction, unlikeCharacterAction, addCommentAction, toggleCommentReactionAction, deleteCharacterAction } from "@/app/(main)/actions";
+import { getCharacterByIdAction, likeCharacterAction, unlikeCharacterAction, addCommentAction, toggleCommentReactionAction, deleteCharacterAction, deleteCommentAction } from "@/app/(main)/actions";
 import { createChatSessionAction } from "@/app/(chat)/actions";
 import { format, formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,7 +28,7 @@ const sanitizeSchema = {
     },
 };
 
-function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
+function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, isStaff, level = 0 }: any) {
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState("");
     const [showReplies, setShowReplies] = useState(false);
@@ -126,6 +126,13 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
         setIsMenuOpen(false);
     };
 
+    const handleDelete = () => {
+        if (confirm("Are you sure you want to delete this comment?")) {
+            onDelete(comment.id);
+        }
+        setIsMenuOpen(false);
+    };
+
     return (
         <div style={{ padding: level === 0 ? '0.5rem 0' : '0' }}>
             <div className={styles.commentContainer} style={{ borderBottom: level > 0 ? 'none' : undefined, padding: level > 0 ? '0.5rem 0' : undefined }}>
@@ -145,6 +152,16 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
                                     {comment.userName}
                                 </Link>
                             </span>
+                            {comment.isVerified && (
+                                <div className={styles.badge} title="Verified Creator" style={{ width: '14px', height: '14px', marginLeft: '0.35rem', display: 'inline-flex' }}>
+                                    <Check size={10} strokeWidth={3} />
+                                </div>
+                            )}
+                            {comment.isStaff && (
+                                <div className={styles.staffBadge} title="Staff" style={{ marginLeft: '0.35rem', fontSize: '0.65rem', padding: '0.1rem 0.3rem', display: 'inline-flex' }}>
+                                    STAFF
+                                </div>
+                            )}
                             <div className={styles.commentMeta} suppressHydrationWarning>
                                 {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                             </div>
@@ -175,6 +192,11 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
                                             <button className={`${styles.commentDropdownItem} ${styles.danger}`} onClick={handleReport}>
                                                 <Flag size={14} /> Report
                                             </button>
+                                            {(currentUserId === comment.userId || isStaff) && (
+                                                <button className={`${styles.commentDropdownItem} ${styles.danger}`} onClick={handleDelete}>
+                                                    <Trash size={14} /> Delete
+                                                </button>
+                                            )}
                                         </motion.div>
                                     </>
                                 )}
@@ -351,7 +373,7 @@ function CommentItem({ comment, allComments, onReply, level = 0 }: any) {
                         style={{ overflow: 'hidden' }}
                     >
                         {replies.map((reply: any) => (
-                            <CommentItem key={reply.id} comment={reply} allComments={allComments} onReply={onReply} level={level + 1} />
+                            <CommentItem key={reply.id} comment={reply} allComments={allComments} onReply={onReply} onDelete={onDelete} currentUserId={currentUserId} isStaff={isStaff} level={level + 1} />
                         ))}
                     </motion.div>
                 )}
@@ -539,6 +561,16 @@ export default function CharacterDetailsPage() {
             setActionError(res.error || "Failed to post comment.");
         }
         setIsCommenting(false);
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        const res = await deleteCommentAction(commentId);
+        if (res.success) {
+            setComments(prev => prev.filter(c => c.id !== commentId && c.parentId !== commentId));
+            toast.success("Comment deleted");
+        } else {
+            toast.error(res.error || "Failed to delete comment");
+        }
     };
 
     const handleReply = async (parentId: string, text: string) => {
@@ -810,14 +842,11 @@ export default function CharacterDetailsPage() {
                         </form>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            {comments.filter((c: any) => !c.parentId).map((comment: any) => (
-                                <CommentItem
-                                    key={comment.id}
-                                    comment={comment}
-                                    allComments={comments}
-                                    onReply={handleReply}
-                                />
-                            ))}
+                            <div className={styles.commentsList}>
+                                {comments.filter(c => !c.parentId).map(comment => (
+                                    <CommentItem key={comment.id} comment={comment} allComments={comments} onReply={handleReply} onDelete={handleDeleteComment} currentUserId={character?.currentUserId} isStaff={character?.isCurrentUserStaff} />
+                                ))}
+                            </div>
                             {comments.length === 0 && (
                                 <p style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', fontStyle: 'italic', textAlign: 'center', padding: '2rem 0' }}>
                                     No comments yet. Be the first to share your thoughts!

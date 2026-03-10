@@ -173,6 +173,34 @@
     height: 20px;
 }
 
+.staffBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ec4899;
+    color: #fff;
+    border-radius: var(--radius-sm, 4px);
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.profileBadgesDisplay {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    align-items: center;
+}
+
+.profileBadgeIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--bg-tertiary);
+}
+
 .bio {
     font-size: 0.95rem;
     color: var(--text-primary, #fff);
