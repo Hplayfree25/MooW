@@ -83,9 +83,19 @@ const withPWAConfig = withPWA({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
+  register: true,
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
+    runtimeCaching: [
+      {
+        urlPattern: /\/manifest\.webmanifest$/,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "manifest-cache",
+        },
+      },
+    ],
   },
 });
 

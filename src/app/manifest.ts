@@ -4,6 +4,10 @@ export default function manifest(): MetadataRoute.Manifest {
     return {
         name: "MooW Chat",
         short_name: "MooW",
+        description: "Your Character Roleplay AI",
+        start_url: "/",
+        scope: "/",
+        id: "/",
         icons: [
             {
                 src: "/web-app-manifest-192x192.png",
