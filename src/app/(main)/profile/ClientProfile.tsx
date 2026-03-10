@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CalendarDays, Check, MapPin, Link as LinkIcon, MoreHorizontal, LayoutGrid, Award, Heart, MessageSquare, Camera, Pin, X, Loader2 } from "lucide-react";
+import { CalendarDays, Check, MapPin, Link as LinkIcon, MoreHorizontal, LayoutGrid, Award, Heart, MessageSquare, Camera, Pin, X, Loader2, Flag } from "lucide-react";
 
 import styles from "./profile.module.css";
 import settingsStyles from "../settings/settings.module.css";
@@ -12,7 +12,7 @@ import Cropper from "react-easy-crop";
 import getCroppedImg from "@/lib/cropImage";
 import { toast } from "sonner";
 import { updateAvatarAction, updateBannerAction, updateShortBioAction, pinCharacterAction } from "../settings/actions";
-import { toggleFollowAction, toggleBadgeDisplayAction } from "../actions";
+import { toggleFollowAction, toggleBadgeDisplayAction, reportAction } from "../actions";
 import { RichTextEditor } from "@/components/RichTextEditor";
 
 interface UserProfile {
@@ -135,6 +135,19 @@ export default function ClientProfile({ user, badges, characters }: { user: User
         }
     };
 
+    const handleReport = async () => {
+        const reason = prompt("Enter reason for reporting this profile:");
+        if (!reason) return;
+
+        const res = await reportAction({ reportedUserId: user.id, reason });
+        if (res.success) {
+            toast.success("Profile reported successfully");
+        } else {
+            toast.error(res.error || "Failed to report profile");
+        }
+        setIsMenuOpen(false);
+    };
+
     const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "banner") => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
@@ -252,9 +265,15 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                                             onClick={() => setIsMenuOpen(false)}
                                         />
                                         <div className={styles.dropdownMenu} style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 50, background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', minWidth: '150px', display: 'flex', flexDirection: 'column' }}>
-                                            <button className={styles.dropdownItem} onClick={() => setIsMenuOpen(false)}>Report</button>
-                                            <button className={styles.dropdownItem} onClick={() => setIsMenuOpen(false)}>Block</button>
-                                            <button className={styles.dropdownItem} onClick={() => setIsMenuOpen(false)}>Share</button>
+                                            <button className={styles.dropdownItem} onClick={handleReport}>
+                                                <Flag size={14} style={{ marginRight: '8px' }} /> Report
+                                            </button>
+                                            <button className={styles.dropdownItem} onClick={() => { setIsMenuOpen(false); toast.info("Block feature coming soon"); }}>Block</button>
+                                            <button className={styles.dropdownItem} onClick={() => {
+                                                setIsMenuOpen(false);
+                                                navigator.clipboard.writeText(window.location.href);
+                                                toast.success("Profile link copied!");
+                                            }}>Share</button>
                                         </div>
                                     </>
                                 )}

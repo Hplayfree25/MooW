@@ -493,6 +493,29 @@ export async function deleteCommentAction(commentId: string) {
     }
 }
 
+export async function reportAction(data: { reportedUserId?: string; reportedCommentId?: string; reason: string }) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { success: false, error: "Not authenticated" };
+
+        const { reports } = await import("@/db/schema");
+
+        await db.insert(reports).values({
+            id: crypto.randomUUID(),
+            reporterId: session.user.id,
+            reportedUserId: data.reportedUserId || null,
+            reportedCommentId: data.reportedCommentId || null,
+            reason: data.reason,
+            status: 'pending',
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to submit report:", error);
+        return { success: false, error: "Failed to submit report" };
+    }
+}
+
 export async function banUserAction(username: string, value: boolean) {
     try {
         const session = await auth();

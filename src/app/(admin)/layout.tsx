@@ -8,6 +8,7 @@ import { userBadges } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import AdminSidebar from "./AdminSidebar";
 import { Inter } from "next/font/google";
+import styles from "./admin-layout.module.css";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -41,9 +42,9 @@ export default async function AdminLayout({
         <html lang="en" suppressHydrationWarning>
             <body className={`${inter.variable} font-sans antialiased text-primary`}>
                 <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-                    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+                    <div className={styles.adminContainer}>
                         <AdminSidebar />
-                        <main style={{ flex: 1, overflowY: 'auto' }}>
+                        <main className={styles.main}>
                             {children}
                         </main>
                     </div>

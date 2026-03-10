@@ -184,3 +184,12 @@ export const userBadges = sqliteTable('user_badges', {
     compoundKey: primaryKey({ columns: [table.userId, table.badgeId] }),
 }));
 
+export const reports = sqliteTable('reports', {
+    id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    reporterId: text('reporter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    reportedUserId: text('reported_user_id').references(() => users.id, { onDelete: 'cascade' }),
+    reportedCommentId: text('reported_comment_id').references(() => characterComments.id, { onDelete: 'cascade' }),
+    reason: text('reason').notNull(),
+    status: text('status').notNull().default('pending'), // 'pending', 'resolved', 'dismissed'
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});

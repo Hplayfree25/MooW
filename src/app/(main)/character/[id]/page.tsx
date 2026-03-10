@@ -9,7 +9,7 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
-import { getCharacterByIdAction, likeCharacterAction, unlikeCharacterAction, addCommentAction, toggleCommentReactionAction, deleteCharacterAction, deleteCommentAction } from "@/app/(main)/actions";
+import { getCharacterByIdAction, likeCharacterAction, unlikeCharacterAction, addCommentAction, toggleCommentReactionAction, deleteCharacterAction, deleteCommentAction, reportAction } from "@/app/(main)/actions";
 import { createChatSessionAction } from "@/app/(chat)/actions";
 import { format, formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -121,8 +121,16 @@ function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, i
         setShowReplies(true);
     };
 
-    const handleReport = () => {
-        alert('Comment reported!');
+    const handleReport = async () => {
+        const reason = prompt("Enter reason for report:");
+        if (!reason) return;
+        
+        const res = await reportAction({ reportedCommentId: comment.id, reason });
+        if (res.success) {
+            toast.success("Comment reported successfully");
+        } else {
+            toast.error(res.error || "Failed to report comment");
+        }
         setIsMenuOpen(false);
     };
 

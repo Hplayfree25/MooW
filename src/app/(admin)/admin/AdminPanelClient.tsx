@@ -64,17 +64,10 @@ export default function AdminPanelClient() {
     };
 
     return (
-        <div className={styles.container}>
+        <div className={styles.adminPanel}>
             <div className={styles.header}>
-                <div className={styles.titleWrap}>
-                    <div className={styles.iconBox}>
-                        <ShieldAlert size={28} color="#ec4899" />
-                    </div>
-                    <div>
-                        <h1 className={styles.title}>Staff Control Panel</h1>
-                        <p className={styles.subtitle}>Manage platform moderation and creator badges.</p>
-                    </div>
-                </div>
+                <h1>Staff Control Panel</h1>
+                <p>Manage platform moderation and creator badges.</p>
             </div>
 
             <div className={styles.content}>
@@ -159,3 +152,4 @@ export default function AdminPanelClient() {
         </div>
     );
 }
+
