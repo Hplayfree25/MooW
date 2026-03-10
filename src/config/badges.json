@@ -27,7 +27,7 @@
         "id": 4,
         "name": "Supporter",
         "description": "Generously supported the platform through donations.",
-        "iconUrl": "/iconsb/supporter.svg",
+        "iconUrl": "/iconsb/supporter.png",
         "rarity": "Rare",
         "condition": "Donate to Moow AI."
     },
@@ -43,8 +43,32 @@
         "id": 6,
         "name": "Top Contributor",
         "description": "Consistently active and helpful in comments, Discord, and communities.",
-        "iconUrl": "/iconsb/top_contributor.svg",
+        "iconUrl": "/iconsb/top_contributor.png",
         "rarity": "Epic",
         "condition": "Active community member recognized by staff."
+    },
+    {
+        "id": 7,
+        "name": "Trusted Tester",
+        "description": "Premium member of the QA team with early access to experimental features.",
+        "iconUrl": "/iconsb/trusted_tester.png",
+        "rarity": "Epic",
+        "condition": "Invite-only access for proven feedback providers."
+    },
+    {
+        "id": 8,
+        "name": "Bug Hunter",
+        "description": "Found and documented critical security or logic vulnerabilities.",
+        "iconUrl": "/iconsb/bug_hunter.png",
+        "rarity": "Rare",
+        "condition": "Report valid production bugs to staff."
+    },
+    {
+        "id": 9,
+        "name": "DeepThought",
+        "description": "Exceptional talent in character creation and prompt engineering.",
+        "iconUrl": "/iconsb/deepthought.png",
+        "rarity": "Legendary",
+        "condition": "Create a character with a high 'DeepThought' logic score."
     }
 ]
