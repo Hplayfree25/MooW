@@ -63,7 +63,7 @@ export default async function PublicProfilePage(props: { params: Promise<{ usern
         isVerified: true,
         followersCount: followersRes?.count || 0,
         joinedAt: joinedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-        bio: user.aboutMe || "This user is way too lazy to set up their bio... what a slacker. 😎",
+        bio: user.shortBio || "This user is way too lazy to set up their bio... what a slacker. 😎",
         isOwner: user.id === session?.user?.id,
         id: user.id,
         isFollowing
@@ -74,6 +74,7 @@ export default async function PublicProfilePage(props: { params: Promise<{ usern
         characterName: characters.characterName,
         imageUrl: characters.imageUrl,
         characterBio: characters.characterBio,
+        creatorNotes: characters.creatorNotes,
         tags: characters.tags,
         likesCount: characters.likesCount,
         creatorId: characters.creatorId,

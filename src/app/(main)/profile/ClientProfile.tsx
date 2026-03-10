@@ -13,6 +13,68 @@ import getCroppedImg from "@/lib/cropImage";
 import { toast } from "sonner";
 import { updateAvatarAction, updateBannerAction, updateShortBioAction, pinCharacterAction } from "../settings/actions";
 import { toggleFollowAction } from "../actions";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+
+const sanitizeSchema = {
+    ...defaultSchema,
+    tagNames: [...(defaultSchema.tagNames || []), 'mark', 'span'],
+    attributes: {
+        ...defaultSchema.attributes,
+        span: [...(defaultSchema.attributes?.span || []), 'style', 'className', 'class', 'data-spoiler'],
+        div: [...(defaultSchema.attributes?.div || []), 'style', 'align'],
+        mark: ['style', 'class', 'className'],
+    },
+};
+
+const parseInlineStyle = (styleString?: string) => {
+    if (!styleString || typeof styleString !== 'string') return undefined;
+    const styleObj: any = {};
+    styleString.split(';').forEach((s: string) => {
+        const [key, ...valueParts] = s.split(':');
+        const value = valueParts.join(':');
+        if (key && value) {
+            const camelKey = key.trim().replace(/-([a-z])/g, g => g[1].toUpperCase());
+            styleObj[camelKey] = value.trim();
+        }
+    });
+    return Object.keys(styleObj).length > 0 ? styleObj : undefined;
+};
+
+const markdownComponents = {
+    div: ({ node, align, className, children, ...props }: any) => {
+        const alignVal = align || node?.properties?.align;
+        return (
+            <div className={className} style={alignVal ? { textAlign: alignVal } : undefined} {...props}>
+                {children}
+            </div>
+        );
+    },
+    span: ({ node, className, children, ...props }: any) => {
+        const style = parseInlineStyle(node?.properties?.style);
+        const isSpoiler = node?.properties && 'data-spoiler' in node.properties;
+        return (
+            <span
+                className={className || (isSpoiler ? 'spoiler-mark' : undefined)}
+                style={style}
+                data-spoiler={isSpoiler ? "" : undefined}
+                {...props}
+            >
+                {children}
+            </span>
+        );
+    },
+    mark: ({ node, className, children, ...props }: any) => {
+        const style = parseInlineStyle(node?.properties?.style);
+        return (
+            <mark className={className} style={style} {...props}>
+                {children}
+            </mark>
+        );
+    }
+};
 
 interface UserProfile {
     username: string;
@@ -41,6 +103,7 @@ interface Character {
     characterName: string;
     imageUrl: string;
     characterBio: string;
+    creatorNotes?: string | null;
     chatCount?: number;
     hasLiked?: boolean;
     likesCount?: number;
@@ -327,7 +390,15 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                                                     </div>
                                                 </div>
 
-                                                <div className={styles.cardBio} dangerouslySetInnerHTML={{ __html: char.characterBio }} />
+                                                <div className={`${styles.cardBio} ${styles.markdownBio}`}>
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm]}
+                                                        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
+                                                        components={markdownComponents}
+                                                    >
+                                                        {char.characterBio || char.creatorNotes || ""}
+                                                    </ReactMarkdown>
+                                                </div>
 
                                                 <div className={styles.cardTags}>
                                                     {char.tags && char.tags.slice(0, 3).map((tag: string) => (

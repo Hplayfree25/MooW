@@ -65,6 +65,7 @@ export default async function ProfilePage() {
         characterName: characters.characterName,
         imageUrl: characters.imageUrl,
         characterBio: characters.characterBio,
+        creatorNotes: characters.creatorNotes,
         tags: characters.tags,
         likesCount: characters.likesCount,
         creatorId: characters.creatorId,

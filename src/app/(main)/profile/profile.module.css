@@ -441,7 +441,7 @@
     flex: 1;
 }
 
-.cardBio > * {
+.cardBio>* {
     margin: 0;
     padding: 0;
     display: inline;
@@ -449,6 +449,22 @@
 
 .cardBio p {
     margin-bottom: 0.25rem;
+}
+
+.markdownBio :global(p) {
+    display: inline;
+    margin: 0;
+}
+
+.markdownBio :global(strong),
+.markdownBio :global(b) {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.markdownBio :global(em),
+.markdownBio :global(i) {
+    font-style: italic;
 }
 
 .cardTags {

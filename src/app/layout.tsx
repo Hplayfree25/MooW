@@ -15,7 +15,6 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "MooW",
   description: "Your Character Roleplay AI",
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
