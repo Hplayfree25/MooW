@@ -19,31 +19,48 @@ export async function GET(request: Request) {
             return NextResponse.json({ success: true, message: "No likes to sync" });
         }
 
-        const syncResults = [];
+        const increments = await redis.mget(...keys);
 
-        for (const key of keys) {
+        const syncResults = [];
+        const batchQueries: any[] = [];
+        const keysToDelete: string[] = [];
+
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
             const characterId = key.split(":")[1];
             if (!characterId) continue;
 
-            const incrementStr = await redis.get(key);
+            const incrementStr = increments[i];
             const increment = parseInt(incrementStr as string, 10);
 
             if (increment && increment !== 0) {
-                try {
-                    await db.update(characters)
+                batchQueries.push(
+                    db.update(characters)
                         .set({
                             likesCount: sql`MAX(0, ${characters.likesCount} + ${increment})`,
                             updatedAt: sql`(strftime('%s', 'now'))`
                         })
-                        .where(eq(characters.id, characterId));
-                    await redis.del(key);
-                    syncResults.push({ characterId, increment, status: "success" });
-                } catch (e) {
-                    syncResults.push({ characterId, increment, status: "error", error: String(e) });
-                }
-            } else {
-                await redis.del(key);
+                        .where(eq(characters.id, characterId))
+                );
+                syncResults.push({ characterId, increment, status: "success" });
             }
+
+            keysToDelete.push(key);
+        }
+
+        if (batchQueries.length > 0) {
+            try {
+                await db.batch(batchQueries as any);
+
+                if (keysToDelete.length > 0) {
+                    await redis.del(...keysToDelete);
+                }
+            } catch (e) {
+                syncResults.forEach(r => r.status = "error");
+                return NextResponse.json({ success: false, error: String(e), synced: syncResults }, { status: 500 });
+            }
+        } else if (keysToDelete.length > 0) {
+            await redis.del(...keysToDelete);
         }
 
         return NextResponse.json({ success: true, synced: syncResults });
