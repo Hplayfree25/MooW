@@ -84,7 +84,7 @@ export default function WelcomeOnboarding() {
                         )}
                         {showAi && (
                             <div className={`${css.msg} ${css.aMsg}`}>
-                                <StreamingText text="I am your digital companion. I am here to explore the infinite possibilities of storytelling with you." speed={50} />
+                                <StreamingText text="I am your digital companion. I am here to explore the infinite possibilities of storytelling with you." speed={90} />
                             </div>
                         )}
                     </div>
