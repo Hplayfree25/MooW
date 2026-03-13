@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useActionState, useEffect, useRef } from "react";
-import { Plus, Trash2, Loader2, X, CheckCircle, Cpu, Zap, Edit2 } from "lucide-react";
+import { Plus, Trash2, Loader2, X, CheckCircle, Cpu, Zap, Edit2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { CustomDropdown } from "@/components/CustomDropdown";
@@ -109,7 +109,7 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
 
         if (currentMode === "our") {
             apiUrl = window.location.origin + "/api/v1";
-            apiKey = "internal";
+            apiKey = "internal"; 
         }
 
         if (!apiUrl || (!apiKey && currentMode === "custom" && !editingConfigId)) return;
@@ -273,8 +273,8 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
 
     const startEditMode = (config: any) => {
         setEditingConfigId(config.id);
-
-        const isOur = config.apiUrl === '/api/v1' || config.apiUrl.includes('/api/v1') && !config.apiUrl.includes('openai.com');
+        
+        const isOur = config.apiUrl === '/api/v1' || (config.apiUrl.includes('/api/v1') && !config.apiUrl.includes('openai.com'));
         setApiMode(isOur ? "our" : "custom");
 
         setTempConfigName(config.configName || "");
@@ -491,32 +491,32 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                                 {editingConfigId && <input type="hidden" name="configId" value={editingConfigId} />}
 
                                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-light)' }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setApiMode('our')}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            background: 'transparent',
-                                            border: 'none',
-                                            borderBottom: apiMode === 'our' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                                            color: apiMode === 'our' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                                            fontWeight: apiMode === 'our' ? 'bold' : 'normal',
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setApiMode('our')} 
+                                        style={{ 
+                                            padding: '0.5rem 1rem', 
+                                            background: 'transparent', 
+                                            border: 'none', 
+                                            borderBottom: apiMode === 'our' ? '2px solid var(--accent-primary)' : '2px solid transparent', 
+                                            color: apiMode === 'our' ? 'var(--text-primary)' : 'var(--text-tertiary)', 
+                                            fontWeight: apiMode === 'our' ? 'bold' : 'normal', 
                                             cursor: 'pointer',
                                             transition: 'all 0.2s'
                                         }}
                                     >
                                         Our Models
                                     </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setApiMode('custom')}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            background: 'transparent',
-                                            border: 'none',
-                                            borderBottom: apiMode === 'custom' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                                            color: apiMode === 'custom' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                                            fontWeight: apiMode === 'custom' ? 'bold' : 'normal',
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setApiMode('custom')} 
+                                        style={{ 
+                                            padding: '0.5rem 1rem', 
+                                            background: 'transparent', 
+                                            border: 'none', 
+                                            borderBottom: apiMode === 'custom' ? '2px solid var(--accent-primary)' : '2px solid transparent', 
+                                            color: apiMode === 'custom' ? 'var(--text-primary)' : 'var(--text-tertiary)', 
+                                            fontWeight: apiMode === 'custom' ? 'bold' : 'normal', 
                                             cursor: 'pointer',
                                             transition: 'all 0.2s'
                                         }}
@@ -531,7 +531,7 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                                         name="configName"
                                         type="text"
                                         className={styles.input}
-                                        placeholder={apiMode === 'our' ? "e.g. Built-in GPT-4" : "e.g. My OpenRouter"}
+                                        placeholder={apiMode === 'our' ? "e.g. Built-in NeroLLM" : "e.g. My OpenRouter"}
                                         value={tempConfigName}
                                         onChange={(e) => setTempConfigName(e.target.value)}
                                         required
@@ -542,6 +542,50 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                                     <>
                                         <input type="hidden" name="apiUrl" value="/api/v1" />
                                         <input type="hidden" name="apiKey" value="internal" />
+                                        
+                                        <div style={{
+                                            padding: '0.75rem',
+                                            borderRadius: 'var(--radius-md)',
+                                            background: 'rgba(234, 179, 8, 0.1)',
+                                            border: '1px solid rgba(234, 179, 8, 0.2)',
+                                            color: '#eab308',
+                                            fontSize: '0.85rem',
+                                            display: 'flex',
+                                            gap: '0.5rem',
+                                            alignItems: 'flex-start',
+                                            marginBottom: '1rem'
+                                        }}>
+                                            <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                                            <div>
+                                                <strong>Notice:</strong> These models are currently under development. Performance and availability may fluctuate.
+                                            </div>
+                                        </div>
+
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                Model Selection
+                                                {isFetchingModels && <Loader2 className="animate-spin" size={14} style={{ color: 'var(--accent-primary)' }} />}
+                                            </label>
+                                            <input type="hidden" name="modelName" value={selectedModel} />
+                                            {models.length > 0 ? (
+                                                <CustomDropdown
+                                                    options={models.map(m => ({ id: m.id, label: m.name }))}
+                                                    value={selectedModel}
+                                                    onChange={(val) => setSelectedModel(val)}
+                                                />
+                                            ) : (
+                                                <div style={{
+                                                    padding: '0.6rem 1rem',
+                                                    borderRadius: 'var(--radius-full)',
+                                                    border: '1px solid var(--border-light)',
+                                                    background: 'var(--bg-secondary)',
+                                                    color: 'var(--text-tertiary)',
+                                                    fontSize: '0.875rem',
+                                                }}>
+                                                    {isFetchingModels ? "Loading models..." : "No models found"}
+                                                </div>
+                                            )}
+                                        </div>
                                     </>
                                 ) : (
                                     <>
@@ -622,52 +666,52 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                                                 </button>
                                             </div>
                                         </div>
+
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.label}>Model</label>
+                                            <input
+                                                name="modelName"
+                                                type="text"
+                                                className={styles.input}
+                                                placeholder="gpt-4o, claude-3-5-sonnet..."
+                                                value={selectedModel}
+                                                onChange={(e) => setSelectedModel(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                Model Selection
+                                                {isFetchingModels && <Loader2 className="animate-spin" size={14} style={{ color: 'var(--accent-primary)' }} />}
+                                            </label>
+                                            {models.length > 0 ? (
+                                                <CustomDropdown
+                                                    options={models.map(m => ({ id: m.id, label: m.name }))}
+                                                    value={selectedModel}
+                                                    onChange={(val) => setSelectedModel(val)}
+                                                />
+                                            ) : (
+                                                <div style={{
+                                                    padding: '0.6rem 1rem',
+                                                    borderRadius: 'var(--radius-full)',
+                                                    border: '1px solid var(--border-light)',
+                                                    background: 'var(--bg-secondary)',
+                                                    color: 'var(--text-tertiary)',
+                                                    fontSize: '0.875rem',
+                                                }}>
+                                                    {isFetchingModels
+                                                        ? "Loading models..."
+                                                        : (!tempApiUrl || (!tempApiKey && !editingConfigId))
+                                                            ? "Enter API URL & Key to load models"
+                                                            : fetchError
+                                                                ? "Could not load models"
+                                                                : "No models found"}
+                                                </div>
+                                            )}
+                                        </div>
                                     </>
                                 )}
-
-                                <div className={styles.inputGroup}>
-                                    <label className={styles.label}>Model</label>
-                                    <input
-                                        name="modelName"
-                                        type="text"
-                                        className={styles.input}
-                                        placeholder="gpt-4o, claude-3-5-sonnet..."
-                                        value={selectedModel}
-                                        onChange={(e) => setSelectedModel(e.target.value)}
-                                        required
-                                    />
-                                </div>
-
-                                <div className={styles.inputGroup}>
-                                    <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        Model Selection
-                                        {isFetchingModels && <Loader2 className="animate-spin" size={14} style={{ color: 'var(--accent-primary)' }} />}
-                                    </label>
-                                    {models.length > 0 ? (
-                                        <CustomDropdown
-                                            options={models.map(m => ({ id: m.id, label: m.name }))}
-                                            value={selectedModel}
-                                            onChange={(val) => setSelectedModel(val)}
-                                        />
-                                    ) : (
-                                        <div style={{
-                                            padding: '0.6rem 1rem',
-                                            borderRadius: 'var(--radius-full)',
-                                            border: '1px solid var(--border-light)',
-                                            background: 'var(--bg-secondary)',
-                                            color: 'var(--text-tertiary)',
-                                            fontSize: '0.875rem',
-                                        }}>
-                                            {isFetchingModels
-                                                ? "Loading models..."
-                                                : (!tempApiUrl || (!tempApiKey && !editingConfigId)) && apiMode === 'custom'
-                                                    ? "Enter API URL & Key to load models"
-                                                    : fetchError
-                                                        ? "Could not load models"
-                                                        : "No models found"}
-                                        </div>
-                                    )}
-                                </div>
 
                                 {fetchError && (
                                     <div style={{
@@ -682,7 +726,7 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                                     </div>
                                 )}
 
-                                <div className={styles.inputGroup}>
+                                <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
                                     <label className={styles.label}>Prompt Post Processing</label>
                                     <input type="hidden" name="promptProcessing" value={promptProcessing} />
                                     <CustomDropdown
