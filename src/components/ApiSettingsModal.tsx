@@ -18,6 +18,7 @@ interface ApiSettingsModalProps {
 export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: ApiSettingsModalProps) {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingConfigId, setEditingConfigId] = useState<string | null>(null);
+    const [apiMode, setApiMode] = useState<"our" | "custom">("our");
 
     const [addState, addFormAction, isAddPending] = useActionState(addApiAction, null);
     const [editState, editFormAction, isEditPending] = useActionState(editApiAction, null);
@@ -101,10 +102,17 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
         }
     };
 
-    const handleFetchModels = async (url?: string, key?: string) => {
-        const apiUrl = url || tempApiUrl;
-        const apiKey = key || tempApiKey;
-        if (!apiUrl || !apiKey || (editingConfigId && !tempApiKey)) return; // If editing and no new key entered, don't auto fetch to prevent bad queries
+    const handleFetchModels = async (url?: string, key?: string, mode?: "our" | "custom") => {
+        const currentMode = mode || apiMode;
+        let apiUrl = url || tempApiUrl;
+        let apiKey = key || tempApiKey;
+
+        if (currentMode === "our") {
+            apiUrl = window.location.origin + "/api/v1";
+            apiKey = "internal";
+        }
+
+        if (!apiUrl || (!apiKey && currentMode === "custom" && !editingConfigId)) return;
 
         setIsFetchingModels(true);
         setFetchError("");
@@ -135,7 +143,6 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
             }));
 
             setModels(fetchedModels);
-            // Only set selected model to first one if it's currently empty
             if (fetchedModels.length > 0 && !selectedModel) {
                 setSelectedModel(fetchedModels[0].id);
             }
@@ -154,9 +161,13 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
             clearTimeout(fetchModelsTimerRef.current);
         }
 
-        if (tempApiUrl && tempApiKey && tempApiKey.length >= 8) {
+        if (apiMode === "our") {
             fetchModelsTimerRef.current = setTimeout(() => {
-                handleFetchModels(tempApiUrl, tempApiKey);
+                handleFetchModels(window.location.origin + "/api/v1", "internal", "our");
+            }, 800);
+        } else if (tempApiUrl && tempApiKey && tempApiKey.length >= 8) {
+            fetchModelsTimerRef.current = setTimeout(() => {
+                handleFetchModels(tempApiUrl, tempApiKey, "custom");
             }, 800);
         } else if (!editingConfigId) {
             setModels([]);
@@ -167,14 +178,22 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                 clearTimeout(fetchModelsTimerRef.current);
             }
         };
-    }, [tempApiUrl, tempApiKey]);
+    }, [tempApiUrl, tempApiKey, apiMode]);
 
     const handleTestConnection = async () => {
-        if (!tempApiUrl) {
+        let chatUrl = tempApiUrl;
+        let authKey = tempApiKey;
+
+        if (apiMode === "our") {
+            chatUrl = window.location.origin + "/api/v1";
+            authKey = "internal";
+        }
+
+        if (!chatUrl) {
             setFetchError("Please enter your API URL first.");
             return;
         }
-        if (!tempApiKey && !editingConfigId) {
+        if (!authKey && !editingConfigId) {
             setFetchError("Please enter your API Key first.");
             return;
         }
@@ -186,14 +205,14 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
         setTestResult(null);
         setFetchError("");
         try {
-            let chatUrl = tempApiUrl.replace(/\/+$/, "");
+            chatUrl = chatUrl.replace(/\/+$/, "");
             chatUrl = chatUrl.replace(/\/(chat\/completions|models)$/, "");
             if (!chatUrl.endsWith("/v1")) {
                 chatUrl += "/v1";
             }
             chatUrl += "/chat/completions";
 
-            if (editingConfigId && !tempApiKey) {
+            if (editingConfigId && !authKey && apiMode === "custom") {
                 setFetchError("Please enter the API key again to test the connection.");
                 setIsTestingConnection(false);
                 return;
@@ -203,7 +222,7 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${tempApiKey}`,
+                    "Authorization": `Bearer ${authKey}`,
                 },
                 body: JSON.stringify({
                     model: selectedModel,
@@ -254,6 +273,10 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
 
     const startEditMode = (config: any) => {
         setEditingConfigId(config.id);
+
+        const isOur = config.apiUrl === '/api/v1' || config.apiUrl.includes('/api/v1') && !config.apiUrl.includes('openai.com');
+        setApiMode(isOur ? "our" : "custom");
+
         setTempConfigName(config.configName || "");
         setTempApiUrl(config.apiUrl || "");
         setTempApiKey("");
@@ -359,6 +382,7 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
         setCustomPrompt("");
         setTestResult(null);
         setShowApiKey(false);
+        setApiMode("our");
     };
 
     const promptProcessingOptions = [
@@ -466,96 +490,140 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                             <form action={editingConfigId ? editFormAction : addFormAction} className={styles.modalBody}>
                                 {editingConfigId && <input type="hidden" name="configId" value={editingConfigId} />}
 
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-light)' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setApiMode('our')}
+                                        style={{
+                                            padding: '0.5rem 1rem',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: apiMode === 'our' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                                            color: apiMode === 'our' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                            fontWeight: apiMode === 'our' ? 'bold' : 'normal',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        Our Models
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setApiMode('custom')}
+                                        style={{
+                                            padding: '0.5rem 1rem',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: apiMode === 'custom' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                                            color: apiMode === 'custom' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                            fontWeight: apiMode === 'custom' ? 'bold' : 'normal',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        Custom
+                                    </button>
+                                </div>
+
                                 <div className={styles.inputGroup}>
                                     <label className={styles.label}>Configuration Name</label>
                                     <input
                                         name="configName"
                                         type="text"
                                         className={styles.input}
-                                        placeholder="e.g. My OpenRouter"
+                                        placeholder={apiMode === 'our' ? "e.g. Built-in GPT-4" : "e.g. My OpenRouter"}
                                         value={tempConfigName}
                                         onChange={(e) => setTempConfigName(e.target.value)}
                                         required
                                     />
                                 </div>
 
-                                <div className={styles.inputGroup}>
-                                    <label className={styles.label}>API URL</label>
-                                    <input
-                                        name="apiUrl"
-                                        type="url"
-                                        className={styles.input}
-                                        placeholder="https://api.openai.com"
-                                        value={tempApiUrl}
-                                        onChange={(e) => setTempApiUrl(e.target.value)}
-                                        required
-                                    />
-                                    <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
-                                        {endpointSuffixes.map(suffix => (
-                                            <button
-                                                key={suffix}
-                                                type="button"
-                                                onClick={() => handleAppendEndpoint(suffix)}
-                                                style={{
-                                                    padding: '0.15rem 0.5rem',
-                                                    fontSize: '0.7rem',
-                                                    borderRadius: 'var(--radius-sm)',
-                                                    border: '1px solid var(--border-light)',
-                                                    background: 'var(--bg-tertiary)',
-                                                    color: 'var(--text-secondary)',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s ease',
-                                                    fontFamily: 'monospace',
-                                                }}
-                                                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; e.currentTarget.style.color = 'var(--accent-primary)'; }}
-                                                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                                            >
-                                                {suffix}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+                                {apiMode === 'our' ? (
+                                    <>
+                                        <input type="hidden" name="apiUrl" value="/api/v1" />
+                                        <input type="hidden" name="apiKey" value="internal" />
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.label}>API URL</label>
+                                            <input
+                                                name="apiUrl"
+                                                type="url"
+                                                className={styles.input}
+                                                placeholder="https://api.openai.com"
+                                                value={tempApiUrl}
+                                                onChange={(e) => setTempApiUrl(e.target.value)}
+                                                required
+                                            />
+                                            <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
+                                                {endpointSuffixes.map(suffix => (
+                                                    <button
+                                                        key={suffix}
+                                                        type="button"
+                                                        onClick={() => handleAppendEndpoint(suffix)}
+                                                        style={{
+                                                            padding: '0.15rem 0.5rem',
+                                                            fontSize: '0.7rem',
+                                                            borderRadius: 'var(--radius-sm)',
+                                                            border: '1px solid var(--border-light)',
+                                                            background: 'var(--bg-tertiary)',
+                                                            color: 'var(--text-secondary)',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.15s ease',
+                                                            fontFamily: 'monospace',
+                                                        }}
+                                                        onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; e.currentTarget.style.color = 'var(--accent-primary)'; }}
+                                                        onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                                                    >
+                                                        {suffix}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
 
-                                <div className={styles.inputGroup}>
-                                    <label className={styles.label}>API Key {editingConfigId && <span style={{ fontSize: '0.7rem', fontStyle: 'italic', fontWeight: 'normal', color: 'var(--text-tertiary)' }}>(Leave blank to keep current)</span>}</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <input
-                                            name="apiKey"
-                                            type={showApiKey ? "text" : "password"}
-                                            className={styles.input}
-                                            style={{ paddingRight: '2.5rem' }}
-                                            placeholder={editingConfigId ? "•••••••••••••" : "sk-..."}
-                                            value={tempApiKey}
-                                            onChange={(e) => setTempApiKey(e.target.value)}
-                                            autoComplete="off"
-                                            required={!editingConfigId}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowApiKey(!showApiKey)}
-                                            style={{
-                                                position: 'absolute',
-                                                right: '0.6rem',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                background: 'transparent',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                color: 'var(--text-tertiary)',
-                                                padding: '0.25rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                            }}
-                                            title={showApiKey ? "Hide API Key" : "Show API Key"}
-                                        >
-                                            {showApiKey ? (
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                                            ) : (
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
+                                        <div className={styles.inputGroup}>
+                                            <label className={styles.label}>API Key {editingConfigId && <span style={{ fontSize: '0.7rem', fontStyle: 'italic', fontWeight: 'normal', color: 'var(--text-tertiary)' }}>(Leave blank to keep current)</span>}</label>
+                                            <div style={{ position: 'relative' }}>
+                                                <input
+                                                    name="apiKey"
+                                                    type={showApiKey ? "text" : "password"}
+                                                    className={styles.input}
+                                                    style={{ paddingRight: '2.5rem' }}
+                                                    placeholder={editingConfigId ? "•••••••••••••" : "sk-..."}
+                                                    value={tempApiKey}
+                                                    onChange={(e) => setTempApiKey(e.target.value)}
+                                                    autoComplete="off"
+                                                    required={!editingConfigId}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowApiKey(!showApiKey)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        right: '0.6rem',
+                                                        top: '50%',
+                                                        transform: 'translateY(-50%)',
+                                                        background: 'transparent',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        color: 'var(--text-tertiary)',
+                                                        padding: '0.25rem',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    title={showApiKey ? "Hide API Key" : "Show API Key"}
+                                                >
+                                                    {showApiKey ? (
+                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                                                    ) : (
+                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
 
                                 <div className={styles.inputGroup}>
                                     <label className={styles.label}>Model</label>
@@ -592,7 +660,7 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                                         }}>
                                             {isFetchingModels
                                                 ? "Loading models..."
-                                                : (!tempApiUrl || (!tempApiKey && !editingConfigId))
+                                                : (!tempApiUrl || (!tempApiKey && !editingConfigId)) && apiMode === 'custom'
                                                     ? "Enter API URL & Key to load models"
                                                     : fetchError
                                                         ? "Could not load models"

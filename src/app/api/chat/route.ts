@@ -97,9 +97,19 @@ Please stay in character and respond appropriately.`;
             });
         }
 
-        const apiUrl = activeConfig.apiUrl.endsWith('/chat/completions')
+        let apiUrl = activeConfig.apiUrl.endsWith('/chat/completions')
             ? activeConfig.apiUrl
             : `${activeConfig.apiUrl.replace(/\/$/, '')}/chat/completions`;
+
+        if (apiUrl.startsWith('/api/v1') || apiUrl.includes('/api/v1')) {
+            const baseUrl = req.nextUrl.origin;
+            if (apiUrl.startsWith('/')) {
+                apiUrl = `${baseUrl}${apiUrl}`;
+            }
+            if (process.env.urc_client_key) { //pake client urc biar kaga bypass
+                decryptedKeyStr = process.env.urc_client_key;
+            }
+        }
 
         const payload: any = {
             model: activeConfig.modelName,
