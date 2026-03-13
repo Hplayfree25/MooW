@@ -130,22 +130,24 @@
 }
 
 .stream {
-    width: 100%;
-    max-width: 400px;
+    width: 90%;
+    max-width: 500px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     padding: 20px;
-    opacity: 0.6;
+    opacity: 0.9;
 }
 
 .msg {
-    padding: 10px 16px;
-    border-radius: 18px;
-    max-width: 80%;
-    font-size: 0.9rem;
+    padding: 14px 20px;
+    border-radius: 20px;
+    max-width: 85%;
+    font-size: 1.05rem;
+    line-height: 1.5;
     animation: msgIn 0.5s ease-out forwards;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    word-wrap: break-word;
 }
 
 .uMsg {
@@ -180,45 +182,52 @@
     100% { transform: translateX(100%); }
 }
 
-.tuto {
-    width: 300px;
-    height: 400px;
+.tipContainer {
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
-    opacity: 0.6;
 }
 
-.hand {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    z-index: 10;
-    animation: swipe 3s infinite ease-in-out;
-}
-
-@keyframes swipe {
-    0% { transform: translate(60px, 100px) scale(1); opacity: 0; }
-    20% { transform: translate(60px, 100px) scale(0.9); opacity: 1; }
-    50% { transform: translate(-60px, 100px) scale(0.9); opacity: 1; }
-    80% { transform: translate(-60px, 100px) scale(1); opacity: 0; }
-    100% { transform: translate(-60px, 100px) scale(1); opacity: 0; }
-}
-
-.tutoCard {
-    width: 180px;
-    height: 260px;
+.tipWrap {
+    width: 220px;
+    height: 220px;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px;
-    animation: cardSwipe 3s infinite ease-in-out;
+    border-radius: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: floatTip 4s infinite ease-in-out;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-@keyframes cardSwipe {
-    0%, 20% { transform: translateX(0) rotate(0); }
-    50%, 80% { transform: translateX(-40px) rotate(-5deg); opacity: 0.5; }
-    100% { transform: translateX(0) rotate(0); }
+.tipIcon {
+    width: 90px;
+    height: 90px;
+    color: rgba(255,255,255,0.9);
+    animation: pulseIcon 2.5s infinite ease-in-out;
+}
+
+@keyframes floatTip {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-15px) rotate(3deg); }
+}
+
+@keyframes pulseIcon {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+
+.cursorBlink {
+    animation: blink 1s step-end infinite;
+    opacity: 0.8;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
 }
 
 .aiBubble {

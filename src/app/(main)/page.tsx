@@ -211,8 +211,7 @@ export default function ExplorePage() {
                   <div className={styles.cardInfo}>
                     <h3 className={styles.cardName}>{char.characterName}</h3>
                     <div className={styles.cardCreator}>
-                        <span style={{ fontWeight: 600 }}>{char.creatorName || char.creatorId || "system"}</span>
-                        <span style={{ color: 'var(--text-tertiary)', fontSize: '0.85em', marginLeft: '6px' }}>@{char.creatorUsername || char.creatorId || "system"}</span>
+                        <span style={{ color: '#3b82f6', fontWeight: 500 }}>@{char.creatorUsername || char.creatorId || "system"}</span>
                     </div>
                   </div>
                 </div>

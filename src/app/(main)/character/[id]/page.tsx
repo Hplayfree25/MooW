@@ -752,9 +752,8 @@ export default function CharacterDetailsPage() {
                     <div className={styles.titleSection}>
                         <h1 className={styles.characterName}>{character.characterName}</h1>
                         <div className={styles.creatorInfo}>
-                            By <Link href={`/profile/${character.creatorUsername || character.creatorId}`} className={styles.creatorLink} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'baseline' }}>
-                                <span style={{ fontWeight: 600 }}>{character.creatorName || character.creatorId || "anonymous"}</span>
-                                <span style={{ color: 'var(--text-tertiary)', fontSize: '0.85em', marginLeft: '6px' }}>@{character.creatorUsername || character.creatorId || "anonymous"}</span>
+                            By <Link href={`/profile/${character.creatorUsername || character.creatorId}`} className={styles.creatorLink} style={{ textDecoration: 'none' }}>
+                                <span style={{ color: '#3b82f6', fontWeight: 500 }}>@{character.creatorUsername || character.creatorId || "anonymous"}</span>
                             </Link>
                         </div>
                         <div className={styles.tagsRow}>

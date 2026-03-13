@@ -5,6 +5,7 @@ import { setupUsernameAction } from "@/app/(auth)/actions";
 import { useRouter } from "next/navigation";
 import css from "./WelcomeOnboarding.module.css";
 import { Loader2, ArrowRight } from "lucide-react";
+import { WelcomeTipIcon, getRandomTip, StreamingText } from "./WelcomeTips";
 
 export default function WelcomeOnboarding() {
     const [idx, setIdx] = useState(0);
@@ -12,7 +13,12 @@ export default function WelcomeOnboarding() {
     const [err, setErr] = useState("");
     const [load, setLoad] = useState(false);
     const [showAi, setShowAi] = useState(false);
+    const [tip, setTip] = useState<any>(null);
     const rtr = useRouter();
+
+    useEffect(() => {
+        setTip(getRandomTip());
+    }, []);
 
     const clips = [
         { t: "Welcome to the Beginning", s: "" },
@@ -22,7 +28,7 @@ export default function WelcomeOnboarding() {
         { t: "Identity Confirmed", s: "" },
         { t: "Demo: Interact with Characters", s: "Experience dynamic conversations" },
         { t: "Demo: Experience the Stories", s: "Immerse yourself in new worlds" },
-        { t: "Tutorial: Swipe and Navigate", s: "Tap to connect and explore" },
+        { t: tip?.t || "Did you know?", s: tip?.s || "Here is a useful tip" },
         { t: "This is still Alpha phase beta", s: "Ready to enter?" }
     ];
 
@@ -31,8 +37,8 @@ export default function WelcomeOnboarding() {
 
         if (idx === 5) {
             setShowAi(false);
-            const t = setTimeout(() => setShowAi(true), 2500);
-            const tmr = setTimeout(() => setIdx(p => p + 1), 6000); // Wait longer for demo
+            const t = setTimeout(() => setShowAi(true), 2000);
+            const tmr = setTimeout(() => setIdx(p => p + 1), 7000); // Wait longer for demo
             return () => { clearTimeout(t); clearTimeout(tmr); };
         }
 
@@ -78,7 +84,7 @@ export default function WelcomeOnboarding() {
                         )}
                         {showAi && (
                             <div className={`${css.msg} ${css.aMsg}`}>
-                                I am your digital companion.
+                                <StreamingText text="I am your digital companion. I am here to explore the infinite possibilities of storytelling with you." speed={50} />
                             </div>
                         )}
                     </div>
@@ -93,15 +99,7 @@ export default function WelcomeOnboarding() {
                     </div>
                 )}
                 {idx === 7 && (
-                    <div className={css.tuto}>
-                        <div className={css.tutoCard} />
-                        <svg className={css.hand} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-                            <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-                            <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2" />
-                            <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
-                            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
-                        </svg>
-                    </div>
+                    <WelcomeTipIcon tip={tip} />
                 )}
             </div>
 
