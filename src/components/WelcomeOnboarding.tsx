@@ -11,6 +11,7 @@ export default function WelcomeOnboarding() {
     const [name, setName] = useState("");
     const [err, setErr] = useState("");
     const [load, setLoad] = useState(false);
+    const [showAi, setShowAi] = useState(false);
     const rtr = useRouter();
 
     const clips = [
@@ -27,6 +28,13 @@ export default function WelcomeOnboarding() {
 
     useEffect(() => {
         if (idx === 2 || idx === 8) return;
+
+        if (idx === 5) {
+            setShowAi(false);
+            const t = setTimeout(() => setShowAi(true), 2500);
+            const tmr = setTimeout(() => setIdx(p => p + 1), 6000); // Wait longer for demo
+            return () => { clearTimeout(t); clearTimeout(tmr); };
+        }
 
         const tmr = setTimeout(() => {
             setIdx(p => p + 1);
@@ -60,6 +68,42 @@ export default function WelcomeOnboarding() {
             <div className={css.g1} />
             <div className={css.g2} />
             <div className={css.nz} />
+
+            <div className={css.demoBox}>
+                {idx === 5 && (
+                    <div className={css.stream}>
+                        <div className={`${css.msg} ${css.uMsg}`}>Who are you?</div>
+                        {!showAi && (
+                            <div className={`${css.msg} ${css.aMsg} ${css.typing}`} style={{ width: '60px', height: '36px' }} />
+                        )}
+                        {showAi && (
+                            <div className={`${css.msg} ${css.aMsg}`}>
+                                I am your digital companion.
+                            </div>
+                        )}
+                    </div>
+                )}
+                {idx === 6 && (
+                    <div className={css.ux}>
+                        <div className={css.card} />
+                        <div className={css.char} />
+                        <svg className={css.cursor} viewBox="0 0 24 24" fill="white">
+                            <path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.83-4.83 2.87 6.43c.13.3.43.48.73.48.11 0 .22-.02.33-.07l2.25-1c.4-.18.58-.65.4-1.05l-2.85-6.38h6.42c.31 0 .47-.38.25-.59L6.35 2.86c-.32-.32-.85-.1-.85.35z" />
+                        </svg>
+                    </div>
+                )}
+                {idx === 7 && (
+                    <div className={css.tuto}>
+                        <div className={css.tutoCard} />
+                        <svg className={css.hand} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
+                            <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+                            <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2" />
+                            <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
+                            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+                        </svg>
+                    </div>
+                )}
+            </div>
 
             <div className={css.top} />
             <div className={css.bot} />

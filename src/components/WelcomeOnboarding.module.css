@@ -105,6 +105,8 @@
     text-transform: uppercase;
     margin-bottom: 1rem;
     text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 20;
 }
 
 .sub {
@@ -112,6 +114,178 @@
     color: #a1a1aa;
     font-weight: 300;
     opacity: 0.8;
+    position: relative;
+    z-index: 20;
+}
+
+.demoBox {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.stream {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    opacity: 0.6;
+}
+
+.msg {
+    padding: 10px 16px;
+    border-radius: 18px;
+    max-width: 80%;
+    font-size: 0.9rem;
+    animation: msgIn 0.5s ease-out forwards;
+    backdrop-filter: blur(4px);
+}
+
+.uMsg {
+    align-self: flex-end;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom-right-radius: 4px;
+}
+
+.aMsg {
+    align-self: flex-start;
+    background: rgba(79, 70, 229, 0.2);
+    border: 1px solid rgba(79, 70, 229, 0.3);
+    border-bottom-left-radius: 4px;
+}
+
+.typing {
+    position: relative;
+    overflow: hidden;
+}
+
+.typing::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    100% { transform: translateX(100%); }
+}
+
+.tuto {
+    width: 300px;
+    height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    opacity: 0.6;
+}
+
+.hand {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    z-index: 10;
+    animation: swipe 3s infinite ease-in-out;
+}
+
+@keyframes swipe {
+    0% { transform: translate(60px, 100px) scale(1); opacity: 0; }
+    20% { transform: translate(60px, 100px) scale(0.9); opacity: 1; }
+    50% { transform: translate(-60px, 100px) scale(0.9); opacity: 1; }
+    80% { transform: translate(-60px, 100px) scale(1); opacity: 0; }
+    100% { transform: translate(-60px, 100px) scale(1); opacity: 0; }
+}
+
+.tutoCard {
+    width: 180px;
+    height: 260px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    animation: cardSwipe 3s infinite ease-in-out;
+}
+
+@keyframes cardSwipe {
+    0%, 20% { transform: translateX(0) rotate(0); }
+    50%, 80% { transform: translateX(-40px) rotate(-5deg); opacity: 0.5; }
+    100% { transform: translateX(0) rotate(0); }
+}
+
+.aiBubble {
+    opacity: 0;
+    animation: msgIn 0.5s ease-out 2.5s forwards;
+}
+
+@keyframes msgIn {
+    0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ux {
+    width: 280px;
+    height: 500px;
+    background: rgba(255,255,255,0.03);
+    border: 4px solid rgba(255,255,255,0.1);
+    border-radius: 32px;
+    position: relative;
+    opacity: 0.5;
+    transform: rotateX(10deg) rotateY(-10deg);
+    animation: float 6s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+    0% { transform: rotateX(10deg) rotateY(-10deg) translateY(0); }
+    100% { transform: rotateX(15deg) rotateY(-5deg) translateY(-20px); }
+}
+
+.card {
+    position: absolute;
+    width: 80%;
+    height: 120px;
+    left: 10%;
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px;
+    top: 60px;
+}
+
+.char {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #4f46e5, #9333ea);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
+}
+
+.cursor {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    z-index: 30;
+    pointer-events: none;
+    animation: moveClick 4s infinite;
+}
+
+@keyframes moveClick {
+    0% { transform: translate(200px, 400px); }
+    40% { transform: translate(140px, 250px); }
+    50% { transform: translate(140px, 250px) scale(0.8); }
+    60% { transform: translate(140px, 250px) scale(1); }
+    100% { transform: translate(-50px, 100px); }
 }
 
 .inW {

@@ -96,19 +96,11 @@ export async function setupUsernameAction(personaName: string) {
             return { error: "Name must be 1-44 characters, letters, numbers, spaces and underscores only.", success: false };
         }
 
-        const [existingUser] = await db.select().from(users).where(eq(users.name, validName));
-        if (existingUser) {
-            return { error: "This name is already taken.", success: false };
-        }
-
         await db.update(users).set({ name: validName }).where(eq(users.id, session.user.id));
 
         return { success: true };
     } catch (error) {
         console.error("Setup username error:", error);
-        if ((error as any).code === 'SQLITE_CONSTRAINT_UNIQUE' || (error as any).message?.includes('UNIQUE')) {
-            return { error: "This name is already taken.", success: false };
-        }
         return { error: "Failed to set persona name.", success: false };
     }
 }
