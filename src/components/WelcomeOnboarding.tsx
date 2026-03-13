@@ -24,7 +24,6 @@ export default function WelcomeOnboarding() {
         { t: "Welcome to the Beginning", s: "" },
         { t: "A World of Infinite Possibilities", s: "" },
         { t: "Identify Yourself", s: "Enter your persona name" },
-        { t: `Initializing Persona: ${name}`, s: "" },
         { t: "Identity Confirmed", s: "" },
         { t: "Demo: Interact with Characters", s: "Experience dynamic conversations" },
         { t: "Demo: Experience the Stories", s: "Immerse yourself in new worlds" },
