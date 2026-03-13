@@ -75,12 +75,15 @@ export async function getCharactersAction(limit: number = 15, offset: number = 0
 
         const chars = await db.select({
             ...getTableColumns(characters),
+            creatorName: users.name,
+            creatorUsername: users.username,
             hasLiked: userId
                 ? sql<boolean>`CASE WHEN MAX(CASE WHEN ${characterLikes.userId} = ${userId} THEN 1 ELSE 0 END) = 1 THEN 1 ELSE 0 END`
                 : sql<boolean>`0`,
             dbLikesCount: sql<number>`count(distinct ${characterLikes.userId})`.mapWith(Number)
         })
             .from(characters)
+            .leftJoin(users, eq(users.username, characters.creatorId))
             .leftJoin(characterLikes, eq(characterLikes.characterId, characters.id))
             .groupBy(characters.id)
             .orderBy(desc(characters.createdAt))
@@ -144,7 +147,15 @@ export async function getCharacterByIdAction(id: string) {
             return { ...cachedChar, data: { ...cachedChar.data, hasLiked, isOwner } };
         }
 
-        const char = await db.select().from(characters).where(eq(characters.id, id)).limit(1);
+        const char = await db.select({
+            ...getTableColumns(characters),
+            creatorName: users.name,
+            creatorUsername: users.username
+        })
+            .from(characters)
+            .leftJoin(users, eq(users.username, characters.creatorId))
+            .where(eq(characters.id, id))
+            .limit(1);
         if (!char || char.length === 0) {
             return { success: false, error: "Character not found" };
         }
