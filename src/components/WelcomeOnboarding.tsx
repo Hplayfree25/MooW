@@ -37,7 +37,7 @@ export default function WelcomeOnboarding() {
         if (idx === 5) {
             setShowAi(false);
             const t = setTimeout(() => setShowAi(true), 2000);
-            const tmr = setTimeout(() => setIdx(p => p + 1), 7000); // Wait longer for demo
+            const tmr = setTimeout(() => setIdx(p => p + 1), 7000);
             return () => { clearTimeout(t); clearTimeout(tmr); };
         }
 
@@ -83,7 +83,7 @@ export default function WelcomeOnboarding() {
                         )}
                         {showAi && (
                             <div className={`${css.msg} ${css.aMsg}`}>
-                                <StreamingText text="I am your digital companion. I am here to explore the infinite possibilities of storytelling with you." speed={90} />
+                                <StreamingText text="I am your digital companion. I am here to explore the infinite possibilities of storytelling with you." speed={30} />
                             </div>
                         )}
                     </div>
