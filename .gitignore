@@ -40,9 +40,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Ignore Conductor files (specs, plans, tracks) from Gemini CLI extension
+# Ignore Conductor files
 conductor/
 conductor/*.md
 conductor/tracks/
 conductor/workflow.md
 conductor/tracks.md
+
+# Drizzle
+/drizzle/
+*.sqlite
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
