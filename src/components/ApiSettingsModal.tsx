@@ -525,18 +525,22 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                                     </button>
                                 </div>
 
-                                <div className={styles.inputGroup}>
-                                    <label className={styles.label}>Configuration Name</label>
-                                    <input
-                                        name="configName"
-                                        type="text"
-                                        className={styles.input}
-                                        placeholder={apiMode === 'our' ? "e.g. Built-in NeroLLM" : "e.g. My OpenRouter"}
-                                        value={tempConfigName}
-                                        onChange={(e) => setTempConfigName(e.target.value)}
-                                        required
-                                    />
-                                </div>
+                                {apiMode === 'custom' ? (
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.label}>Configuration Name</label>
+                                        <input
+                                            name="configName"
+                                            type="text"
+                                            className={styles.input}
+                                            placeholder="e.g. My OpenRouter"
+                                            value={tempConfigName}
+                                            onChange={(e) => setTempConfigName(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                ) : (
+                                    <input type="hidden" name="configName" value={tempConfigName || selectedModel || "Built-in Model"} />
+                                )}
 
                                 {apiMode === 'our' ? (
                                     <>
