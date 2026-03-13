@@ -19,10 +19,17 @@ export async function OPTIONS(req: NextRequest, { params }: { params: Promise<{ 
     return handleProxy(req, await params);
 }
 
+const MODEL_MAP: Record<string, string> = {
+    "NeroLLM": "deepseek-chat",
+    "NeroLLM Reasoner": "deepseek-reasoner"
+};
+
+const SYSTEM_INJECTION = "You are currently roleplaying. Assume the persona described by the user entirely. Be immersive, descriptive, and stay completely in character at all times. Do not break character or acknowledge that you are an AI unless instructed.";
+
 async function handleProxy(req: NextRequest, params: { slug: string[] }) {
     try {
         const clientAuth = req.headers.get("Authorization");
-        const expectedClientKey = process.env.urc_client_key; // pastiin klien adalah sah
+        const expectedClientKey = process.env.urc_client_key;
 
         if (expectedClientKey && clientAuth !== `Bearer ${expectedClientKey}`) {
             return NextResponse.json(
@@ -42,7 +49,6 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
         const apiKey = process.env.urc_key;
 
         if (!baseUrl || !apiKey) {
-            console.error("Missing urc_base_url or urc_key in environment variables");
             return NextResponse.json(
                 {
                     error: {
@@ -57,19 +63,33 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
         }
 
         const path = params.slug.join("/");
-        const searchParams = req.nextUrl.searchParams.toString();
-        const targetUrl = searchParams
-            ? `${baseUrl}/${path}?${searchParams}`
-            : `${baseUrl}/${path}`;
+
+        if (req.method === "GET" && path === "models") {
+            return NextResponse.json({
+                object: "list",
+                data: [
+                    {
+                        id: "NeroLLM",
+                        object: "model",
+                        created: Date.now(),
+                        owned_by: "system"
+                    },
+                    {
+                        id: "NeroLLM Reasoner",
+                        object: "model",
+                        created: Date.now(),
+                        owned_by: "system"
+                    }
+                ]
+            });
+        }
 
         const headers = new Headers(req.headers);
-
         headers.delete("host");
         headers.delete("connection");
         headers.delete("content-length");
         headers.delete("referer");
         headers.delete("origin");
-
         headers.set("Authorization", `Bearer ${apiKey}`);
 
         const init: RequestInit = {
@@ -78,16 +98,44 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
         };
 
         if (req.method !== "GET" && req.method !== "HEAD") {
-            const body = await req.text();
-            if (body) {
-                init.body = body;
+            let bodyStr = await req.text();
+            
+            if (path === "chat/completions" && bodyStr) {
+                try {
+                    const bodyJson = JSON.parse(bodyStr);
+                    if (bodyJson.model && MODEL_MAP[bodyJson.model]) {
+                        bodyJson.model = MODEL_MAP[bodyJson.model];
+                    }
+                    if (bodyJson.messages && Array.isArray(bodyJson.messages)) {
+                        const hasSystem = bodyJson.messages.some((m: any) => m.role === "system");
+                        if (hasSystem) {
+                            bodyJson.messages = bodyJson.messages.map((m: any) => {
+                                if (m.role === "system") {
+                                    return { ...m, content: `${SYSTEM_INJECTION}\n\n${m.content}` };
+                                }
+                                return m;
+                            });
+                        } else {
+                            bodyJson.messages.unshift({ role: "system", content: SYSTEM_INJECTION });
+                        }
+                    }
+                    bodyStr = JSON.stringify(bodyJson);
+                } catch (e) {
+                }
+            }
+            if (bodyStr) {
+                init.body = bodyStr;
             }
         }
+
+        const searchParams = req.nextUrl.searchParams.toString();
+        const targetUrl = searchParams
+            ? `${baseUrl}/${path}?${searchParams}`
+            : `${baseUrl}/${path}`;
 
         const response = await fetch(targetUrl, init);
 
         const responseHeaders = new Headers(response.headers);
-
         responseHeaders.delete("content-encoding");
         responseHeaders.delete("content-length");
         responseHeaders.delete("transfer-encoding");
@@ -97,7 +145,6 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
         responseHeaders.delete("cf-cache-status");
         responseHeaders.delete("cf-ray");
         responseHeaders.delete("x-envoy-upstream-service-time");
-
         responseHeaders.set("access-control-allow-origin", "*");
 
         if (response.headers.get("content-type")?.includes("text/event-stream")) {
@@ -112,7 +159,6 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
         }
 
         const resBody = await response.arrayBuffer();
-
         return new NextResponse(resBody, {
             status: response.status,
             headers: responseHeaders,
