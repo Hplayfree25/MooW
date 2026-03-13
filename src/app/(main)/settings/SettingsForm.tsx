@@ -237,20 +237,20 @@ function ProfileTab({ user }: { user: any }) {
 
             <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div className={styles.inputGroup}>
-                    <label htmlFor="name" className={styles.label}>Username</label>
+                    <label htmlFor="username" className={styles.label}>Username</label>
                     <input
-                        id="name" name="name" type="text"
+                        id="username" name="username" type="text"
                         defaultValue={user?.username || ""}
-                        placeholder="Your display name"
+                        placeholder="Your unique handle"
                         className={styles.input}
                         required
                     />
                 </div>
 
                 <div className={styles.inputGroup}>
-                    <label htmlFor="username" className={styles.label}>Name (Main Persona)</label>
+                    <label htmlFor="name" className={styles.label}>Name (Main Persona)</label>
                     <input
-                        id="username" name="username" type="text"
+                        id="name" name="name" type="text"
                         defaultValue={user?.name || ""}
                         placeholder="Persona name for AI conversations"
                         pattern="^[a-zA-Z0-9_ ]{1,44}$"

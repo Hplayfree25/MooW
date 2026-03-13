@@ -4,8 +4,8 @@ import type { AdapterAccountType } from "next-auth/adapters";
 
 export const users = sqliteTable("user", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    username: text("name").unique(),
-    name: text("username"),
+    username: text("username").unique(),
+    name: text("name"),
     email: text("email").unique(),
     emailVerified: integer("emailVerified", { mode: "timestamp_ms" }),
     password: text("password"),

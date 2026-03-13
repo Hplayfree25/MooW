@@ -16,6 +16,7 @@ import { toggleFollowAction, toggleBadgeDisplayAction, reportAction } from "../a
 import { RichTextEditor } from "@/components/RichTextEditor";
 
 interface UserProfile {
+    name: string;
     username: string;
     handle: string;
     avatarUrl: string;
@@ -283,18 +284,21 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                 </div>
 
                 <div className={styles.info}>
-                    <div className={styles.unameWrap}>
-                        <h1 className={styles.uname}>@{user.username}</h1>
-                        {user.isVerified && (
-                            <div className={styles.badge} title="Verified Creator">
-                                <Check size={14} strokeWidth={3} />
-                            </div>
-                        )}
-                        {user.isStaff && (
-                            <div className={styles.staffBadge} title="Staff">
-                                STAFF
-                            </div>
-                        )}
+                    <div className={styles.unameWrap} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <h1 className={styles.uname}>{user.name}</h1>
+                            {user.isVerified && (
+                                <div className={styles.badge} title="Verified Creator">
+                                    <Check size={14} strokeWidth={3} />
+                                </div>
+                            )}
+                            {user.isStaff && (
+                                <div className={styles.staffBadge} title="Staff">
+                                    STAFF
+                                </div>
+                            )}
+                        </div>
+                        <span className={styles.userHandle}>@{user.username}</span>
                     </div>
 
                     <div className={styles.meta} style={{ marginTop: '0.75rem' }}>

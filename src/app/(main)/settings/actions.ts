@@ -23,8 +23,8 @@ export async function updateProfileAction(prevState: any, formData: FormData) {
             return { error: "You must be logged in.", success: false };
         }
 
-        const name = formData.get("username") as string;
-        const username = formData.get("name") as string;
+        const username = formData.get("username") as string;
+        const name = formData.get("name") as string;
         const aboutMe = formData.get("aboutMe") as string;
         const appearance = formData.get("appearance") as string;
 

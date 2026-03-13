@@ -51,6 +51,7 @@ export default async function ProfilePage() {
     const joinedDate = user.emailVerified ? new Date(user.emailVerified) : new Date();
 
     const profileData = {
+        name: user.name || user.username || `user_${user.id.substring(0, 6)}`,
         username: user.username || `user_${user.id.substring(0, 6)}`,
         handle: user.username || `user_${user.id.substring(0, 6)}`,
         avatarUrl: user.image || "https://api.dicebear.com/7.x/notionists/svg?seed=fallback",
