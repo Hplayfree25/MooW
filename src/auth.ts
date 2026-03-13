@@ -38,5 +38,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
         }),
     ],
-    adapter: DrizzleAdapter(db),
+    adapter: {
+        ...DrizzleAdapter(db),
+        async createUser(user) {
+            let baseUsername = "";
+            let generatedImage = user.image;
+
+            if (user.name) {
+                baseUsername = user.name.toLowerCase().replace(/[^a-z0-9_]/g, "");
+            }
+
+            if (!baseUsername) {
+                baseUsername = "user";
+            }
+
+            const randomSuffix = Math.random().toString(36).substring(2, 6);
+            const finalUsername = `${baseUsername}_${randomSuffix}`;
+
+            if (!generatedImage) {
+                generatedImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || finalUsername)}&background=random&color=fff`;
+            }
+
+            const [newUser] = await db.insert(users).values({
+                ...user,
+                username: finalUsername,
+                name: user.name || finalUsername,
+                image: generatedImage,
+            }).returning();
+
+            return newUser as any;
+        }
+    },
 });
