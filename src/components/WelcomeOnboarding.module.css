@@ -157,11 +157,33 @@
     border-bottom-right-radius: 4px;
 }
 
+.aMsgWrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    align-self: flex-start;
+    max-width: 90%;
+}
+
+.aAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #9333ea);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
+    padding: 6px;
+    animation: msgIn 0.5s ease-out forwards;
+}
+
 .aMsg {
     align-self: flex-start;
     background: rgba(79, 70, 229, 0.2);
     border: 1px solid rgba(79, 70, 229, 0.3);
-    border-bottom-left-radius: 4px;
+    border-top-left-radius: 4px;
 }
 
 .typing {
@@ -230,16 +252,6 @@
     50% { opacity: 0; }
 }
 
-.aiBubble {
-    opacity: 0;
-    animation: msgIn 0.5s ease-out 2.5s forwards;
-}
-
-@keyframes msgIn {
-    0% { opacity: 0; transform: translateY(10px) scale(0.95); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-
 .ux {
     width: 280px;
     height: 500px;
@@ -265,6 +277,29 @@
     background: rgba(255,255,255,0.05);
     border-radius: 16px;
     top: 60px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.imgPlaceholder {
+    width: 100%;
+    height: 60px;
+    color: rgba(255,255,255,0.2);
+}
+
+.cardLines {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cardLine {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    width: 100%;
 }
 
 .char {
@@ -278,6 +313,9 @@
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .cursor {
