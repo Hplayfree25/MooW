@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import fs from 'fs';
+import path from 'path';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
     return handleProxy(req, await params);
@@ -19,14 +21,50 @@ export async function OPTIONS(req: NextRequest, { params }: { params: Promise<{ 
     return handleProxy(req, await params);
 }
 
-const MODEL_MAP: Record<string, string> = {
-    "NeroLLM": "deepseek-chat",
-    "NeroLLM Reasoner": "deepseek-reasoner"
-};
+function getModelMap(): Record<string, string> {
+    try {
+        const yamlPath = path.join(process.cwd(), 'models.yaml');
+        if (fs.existsSync(yamlPath)) {
+            const content = fs.readFileSync(yamlPath, 'utf8');
+            const map: Record<string, string> = {};
+            const lines = content.split('\n');
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed.startsWith('#')) continue;
+                const colonIdx = trimmed.indexOf(':');
+                if (colonIdx > 0) {
+                    const key = trimmed.substring(0, colonIdx).trim().replace(/^["']|["']$/g, '');
+                    let value = trimmed.substring(colonIdx + 1).trim();
+                    
+                    const inlineCommentIdx = value.indexOf('#');
+                    if (inlineCommentIdx >= 0) {
+                        value = value.substring(0, inlineCommentIdx).trim();
+                    }
+                    
+                    value = value.replace(/^["']|["']$/g, '');
+                    
+                    if (key && value) {
+                        map[key] = value;
+                    }
+                }
+            }
+            if (Object.keys(map).length > 0) return map;
+        }
+    } catch (e) {
+        console.error("Failed to parse models.yaml", e);
+    }
+    
+    return {
+        "NeroLLM": "deepseek-chat",
+        "NeroLLM Reasoner": "deepseek-reasoner"
+    };
+}
 
 const SYSTEM_INJECTION = "You are currently roleplaying. Assume the persona described by the user entirely. Be immersive, descriptive, and stay completely in character at all times. Do not break character or acknowledge that you are an AI unless instructed.";
 
 async function handleProxy(req: NextRequest, params: { slug: string[] }) {
+    const MODEL_MAP = getModelMap();
+
     try {
         const clientAuth = req.headers.get("Authorization");
         const expectedClientKey = process.env.urc_client_key;
@@ -65,22 +103,16 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
         const path = params.slug.join("/");
 
         if (req.method === "GET" && path === "models") {
+            const data = Object.keys(MODEL_MAP).map(key => ({
+                id: key,
+                object: "model",
+                created: Date.now(),
+                owned_by: "system"
+            }));
+
             return NextResponse.json({
                 object: "list",
-                data: [
-                    {
-                        id: "NeroLLM",
-                        object: "model",
-                        created: Date.now(),
-                        owned_by: "system"
-                    },
-                    {
-                        id: "NeroLLM Reasoner",
-                        object: "model",
-                        created: Date.now(),
-                        owned_by: "system"
-                    }
-                ]
+                data
             });
         }
 

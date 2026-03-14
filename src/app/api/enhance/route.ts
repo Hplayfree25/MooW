@@ -39,9 +39,13 @@ export async function POST(req: NextRequest) {
             console.error("Failed to decrypt API key", e);
         }
 
-        const apiUrl = activeConfig.apiUrl.endsWith('/chat/completions')
+        let apiUrl = activeConfig.apiUrl.endsWith('/chat/completions')
             ? activeConfig.apiUrl
             : `${activeConfig.apiUrl.replace(/\/$/, '')}/chat/completions`;
+
+        if (apiUrl.startsWith('/')) {
+            apiUrl = new URL(apiUrl, req.nextUrl.origin).toString();
+        }
 
         let chatContext = "";
         let characterName = "";
@@ -83,8 +87,7 @@ RULES:
 1. Significantly improve the text - don't just echo it back
 2. Improve vocabulary, sentence structure, and flow
 3. Keep the same core meaning and intent
-4. DO NOT add quotation marks or markdown formatting
-5. Output ONLY the enhanced text`;
+4. Output ONLY the enhanced text`;
 
         const userPrompt = chatContext
             ? `Recent conversation for context:\n---\n${chatContext}\n---\n\nThe user (${userName}) wants to send this next message. Rewrite it to be more expressive and fitting:\n${text}`
