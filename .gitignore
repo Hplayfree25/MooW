@@ -54,3 +54,6 @@ conductor/tracks.md
 *.db-journal
 *.db-shm
 *.db-wal
+
+# Models
+models.yaml
