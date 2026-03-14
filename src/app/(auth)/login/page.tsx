@@ -49,6 +49,7 @@ export default function LoginPage() {
                                 name="username"
                                 placeholder="Enter your username"
                                 required
+                                autoComplete="username"
                                 className={styles.input}
                             />
                         </div>
@@ -67,6 +68,7 @@ export default function LoginPage() {
                                 name="password"
                                 placeholder="••••••••"
                                 required
+                                autoComplete="current-password"
                                 className={styles.input}
                             />
                         </div>

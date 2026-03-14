@@ -243,6 +243,7 @@ function ProfileTab({ user }: { user: any }) {
                         defaultValue={user?.username || ""}
                         placeholder="Your unique handle"
                         className={styles.input}
+                        autoComplete="off"
                         required
                     />
                 </div>
@@ -307,7 +308,7 @@ function PrivacyTab({ user, settings }: { user: any, settings: any }) {
 
             <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
                 <label className={styles.label}>Change Password</label>
-                <input type="password" placeholder="New Password" name="newPassword" className={styles.input} />
+                <input type="password" placeholder="New Password" name="newPassword" autoComplete="new-password" className={styles.input} />
             </div>
 
             <div className={styles.toggleGroup} style={{ marginTop: '2rem' }}>

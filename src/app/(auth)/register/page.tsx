@@ -73,6 +73,7 @@ export default function RegisterPage() {
                                 name="username"
                                 placeholder="Choose a username"
                                 required
+                                autoComplete="username"
                                 className={styles.input}
                             />
                         </div>
@@ -91,6 +92,7 @@ export default function RegisterPage() {
                                     required
                                     minLength={6}
                                     onChange={handlePasswordChange}
+                                    autoComplete="new-password"
                                     className={styles.input}
                                 />
                             </div>
@@ -107,6 +109,7 @@ export default function RegisterPage() {
                                     placeholder="••••••••"
                                     required
                                     onChange={handleConfirmPasswordChange}
+                                    autoComplete="new-password"
                                     className={styles.input}
                                 />
                             </div>
