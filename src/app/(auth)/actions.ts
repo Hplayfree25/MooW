@@ -80,7 +80,7 @@ export async function register(
 
 export async function setupUsernameAction(personaName: string) {
     try {
-        const { auth } = await import("@/auth");
+        const { auth, signOut } = await import("@/auth");
         const session = await auth();
         if (!session?.user?.id) {
             return { error: "You must be logged in.", success: false };
@@ -94,6 +94,13 @@ export async function setupUsernameAction(personaName: string) {
 
         if (!/^[a-zA-Z0-9_ ]{1,44}$/.test(validName)) {
             return { error: "Name must be 1-44 characters, letters, numbers, spaces and underscores only.", success: false };
+        }
+
+        const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.id, session.user.id)).limit(1);
+
+        if (!existing) {
+            await signOut({ redirect: false });
+            return { error: "Your account no longer exists. Please register again.", success: false };
         }
 
         await db.update(users).set({ name: validName }).where(eq(users.id, session.user.id));

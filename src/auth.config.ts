@@ -28,6 +28,8 @@ export default {
                     if (dbUser) {
                         session.user.name = dbUser.username;
                         session.user.image = dbUser.image;
+                    } else {
+                        session.user.id = undefined as any;
                     }
                 } catch (e) {
                     console.error("Failed to fetch fresh user data for session:", e);
