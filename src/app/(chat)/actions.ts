@@ -498,6 +498,9 @@ export async function generateChatMemorySummaryAction(chatId: string) {
         if (!response.ok) {
             const errText = await response.text();
             console.error("Summary API Error:", response.status, errText);
+            if (response.status === 503 && errText.toLowerCase().includes("overload")) {
+                return { success: false, error: "Our system is overloaded for this model, please try again" };
+            }
             return { success: false, error: "Failed to generate summary: " + response.statusText };
         }
 

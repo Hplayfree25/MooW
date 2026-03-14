@@ -138,6 +138,9 @@ Please stay in character and respond appropriately.`;
         if (!response.ok) {
             const errText = await response.text();
             console.error("Upstream API Error:", response.status, errText);
+            if (response.status === 503 && errText.toLowerCase().includes("overload")) {
+                return NextResponse.json({ error: "Our system is overloaded for this model, please try again" }, { status: 503 });
+            }
             return NextResponse.json({ error: "Upstream API error: " + response.statusText }, { status: response.status });
         }
 

@@ -113,6 +113,11 @@ RULES:
         if (!response.ok) {
             const errText = await response.text();
             console.error("Enhance API Error:", response.status, errText);
+            if (response.status === 503 && errText.toLowerCase().includes("overload")) {
+                return NextResponse.json({
+                    error: "Our system is overloaded for this model, please try again"
+                }, { status: 503 });
+            }
             return NextResponse.json({
                 error: "Failed to enhance text: " + response.statusText
             }, { status: response.status });

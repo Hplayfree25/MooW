@@ -135,6 +135,34 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
 
         const response = await fetch(targetUrl, init);
 
+        if (response.status === 503) {
+            const errBody = await response.text();
+            if (errBody.toLowerCase().includes("cpu overload") || errBody.toLowerCase().includes("overload")) {
+                return NextResponse.json(
+                    {
+                        error: {
+                            message: "Our system is overloaded for this model, please try again",
+                            type: "server_error",
+                            param: null,
+                            code: "cpu_overload"
+                        }
+                    },
+                    { status: 503 }
+                );
+            }
+            return NextResponse.json(
+                {
+                    error: {
+                        message: "Service temporarily unavailable, please try again later",
+                        type: "server_error",
+                        param: null,
+                        code: "service_unavailable"
+                    }
+                },
+                { status: 503 }
+            );
+        }
+
         const responseHeaders = new Headers(response.headers);
         responseHeaders.delete("content-encoding");
         responseHeaders.delete("content-length");
