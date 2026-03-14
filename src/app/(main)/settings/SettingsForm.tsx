@@ -567,10 +567,9 @@ function ApiTab({ apiConfigs }: { apiConfigs: any[] }) {
             if (res.ok) {
                 const data = await res.json();
                 const reply = data.choices?.[0]?.message?.content || "(No response content)";
-                setTestResult(null); // Clear previous result if any
-                toast.success("Your API is Connected!", {
+                setTestResult(null);
+                toast.success("AI Connected!", {
                     icon: <Cpu className="animate-pulse" size={18} style={{ color: 'var(--accent-primary)' }} />,
-                    description: `AI replied: "${reply.slice(0, 150)}..."`
                 });
             } else {
                 const text = await res.text();

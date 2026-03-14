@@ -235,9 +235,8 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                 const data = await res.json();
                 const reply = data.choices?.[0]?.message?.content || "(No response content)";
                 setTestResult(null);
-                toast.success("Your API is Connected!", {
+                toast.success("AI Connected!", {
                     icon: <Cpu className="animate-pulse" size={18} style={{ color: 'var(--accent-primary)' }} />,
-                    description: `AI replied: "${reply.slice(0, 150)}..."`
                 });
             } else {
                 const text = await res.text();
@@ -323,8 +322,6 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
             if (!reader) throw new Error("No reader");
 
             if (!res.ok) {
-                const err = await res.json().catch(() => ({ error: "Failed to connect" }));
-                toast.error(err.error || `Test failed (${res.status})`);
                 return;
             }
 
@@ -355,15 +352,11 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
             }
 
             if (fullReply) {
-                toast.success("API Connected!", {
+                toast.success("AI Connected!", {
                     icon: <Cpu className="animate-pulse" size={18} style={{ color: 'var(--accent-primary)' }} />,
-                    description: `AI replied: "${fullReply.slice(0, 100)}..."`
                 });
-            } else {
-                toast.error("Connected but received empty response.");
             }
         } catch (err: any) {
-            toast.error(err.message || "Could not connect to the API.");
         } finally {
             setTestingConfigId(null);
         }
