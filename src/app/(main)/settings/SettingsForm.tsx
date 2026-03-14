@@ -427,8 +427,10 @@ function ApiTab({ apiConfigs }: { apiConfigs: any[] }) {
         if (addState !== prevAddStateRef.current) {
             prevAddStateRef.current = addState;
             if (addState?.success) {
-                toast.success("API configuration saved!");
-                resetForm();
+                if (apiMode !== 'our') {
+                    toast.success("API configuration saved!");
+                    resetForm();
+                }
             } else if (addState?.error) {
                 toast.error(addState.error);
             }
@@ -436,13 +438,15 @@ function ApiTab({ apiConfigs }: { apiConfigs: any[] }) {
         if (editState !== prevEditStateRef.current) {
             prevEditStateRef.current = editState;
             if (editState?.success) {
-                toast.success("API configuration saved!");
-                resetForm();
+                if (apiMode !== 'our') {
+                    toast.success("API configuration saved!");
+                    resetForm();
+                }
             } else if (editState?.error) {
                 toast.error(editState.error);
             }
         }
-    }, [addState, editState]);
+    }, [addState, editState, apiMode]);
 
     useEffect(() => {
         if (apiMode === 'our' && ourConfig) {
@@ -480,7 +484,7 @@ function ApiTab({ apiConfigs }: { apiConfigs: any[] }) {
         let apiKey = key || tempApiKey;
 
         if (currentMode === "our") {
-            apiUrl = window.location.origin + "/api/v1";
+            apiUrl = "/api/v1";
             apiKey = "internal";
         }
 
@@ -520,9 +524,7 @@ function ApiTab({ apiConfigs }: { apiConfigs: any[] }) {
         if (fetchModelsTimerRef.current) clearTimeout(fetchModelsTimerRef.current);
 
         if (apiMode === "our") {
-            fetchModelsTimerRef.current = setTimeout(() => {
-                handleFetchModels(window.location.origin + "/api/v1", "internal", "our");
-            }, 500);
+            handleFetchModels("/api/v1", "internal", "our");
         } else if (tempApiUrl && tempApiKey && tempApiKey.length >= 8) {
             fetchModelsTimerRef.current = setTimeout(() => {
                 handleFetchModels(tempApiUrl, tempApiKey, "custom");
