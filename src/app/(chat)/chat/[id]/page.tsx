@@ -398,19 +398,28 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             }
                             finalContent = combinedContent;
 
-                            setMessages(prev => prev.map(m => {
-                                if (m.id === tempId) {
-                                    const updatedVersions: VersionEntry[] = [{ reasoning: reasoningContent, content: combinedContent }];
-                                    return {
-                                        ...m,
-                                        content: combinedContent,
-                                        parts: [{ type: "text", text: combinedContent }],
-                                        versions: updatedVersions,
-                                        activeVersionIndex: 0
-                                    };
-                                }
-                                return m;
-                            }));
+                            setMessages(prev => {
+                                const targetMsg = prev.find(m => m.id === tempId);
+                                if (!targetMsg) return prev;
+
+                                const contentChanged = targetMsg.content !== combinedContent;
+                                const reasoningChanged = targetMsg.versions?.[0]?.reasoning !== reasoningContent;
+
+                                if (!contentChanged && !reasoningChanged) return prev;
+
+                                return prev.map(m => {
+                                    if (m.id === tempId) {
+                                        return {
+                                            ...m,
+                                            content: combinedContent,
+                                            parts: [{ type: "text", text: combinedContent }],
+                                            versions: [{ reasoning: reasoningContent, content: combinedContent }],
+                                            activeVersionIndex: 0
+                                        };
+                                    }
+                                    return m;
+                                });
+                            });
 
                         } catch (e) {
                             console.warn("Parse error", e);
