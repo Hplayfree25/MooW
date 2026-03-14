@@ -349,19 +349,65 @@ function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, i
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
-                            style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center', overflow: 'hidden' }}
+                            style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'flex-start', overflow: 'hidden' }}
                         >
-                            <input
-                                type="text"
+                            <textarea
                                 value={replyText}
-                                onChange={e => setReplyText(e.target.value)}
+                                onChange={(e) => {
+                                    setReplyText(e.target.value);
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        if (typeof window !== 'undefined' && window.innerWidth > 768) {
+                                            e.preventDefault();
+                                            submitReply();
+                                        }
+                                    }
+                                }}
                                 placeholder="Write a reply..."
-                                style={{ flex: 1, padding: '0.6rem 0.85rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.875rem' }}
+                                rows={1}
+                                style={{ 
+                                    flex: 1, 
+                                    padding: '0.6rem 0.85rem', 
+                                    borderRadius: 'var(--radius-lg)', 
+                                    border: '1px solid var(--border-light)', 
+                                    backgroundColor: 'var(--bg-secondary)', 
+                                    color: 'var(--text-primary)', 
+                                    fontSize: '0.875rem',
+                                    resize: 'none',
+                                    minHeight: '40px',
+                                    outline: 'none',
+                                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)',
+                                    transition: 'border-color 0.2s, box-shadow 0.2s'
+                                }}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = 'var(--accent-primary)';
+                                    e.target.style.boxShadow = '0 0 0 1px var(--accent-primary)';
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = 'var(--border-light)';
+                                    e.target.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.05)';
+                                }}
                                 autoFocus
                             />
                             <button
                                 onClick={submitReply}
-                                style={{ padding: '0.6rem 1.2rem', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, transition: 'background-color 0.2s' }}
+                                disabled={!replyText.trim()}
+                                style={{ 
+                                    padding: '0 1.2rem',
+                                    height: '40px',
+                                    borderRadius: 'var(--radius-lg)', 
+                                    backgroundColor: 'var(--accent-primary)', 
+                                    color: 'white', 
+                                    border: 'none', 
+                                    cursor: !replyText.trim() ? 'not-allowed' : 'pointer', 
+                                    fontSize: '0.875rem', 
+                                    fontWeight: 600, 
+                                    transition: 'background-color 0.2s, opacity 0.2s',
+                                    opacity: !replyText.trim() ? 0.6 : 1
+                                }}
                             >
                                 Send
                             </button>
@@ -547,8 +593,8 @@ export default function CharacterDetailsPage() {
         setIsLiking(false);
     };
 
-    const handleCommentSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCommentSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!commentText.trim() || !character || isCommenting) return;
         setIsCommenting(true);
 
@@ -565,6 +611,10 @@ export default function CharacterDetailsPage() {
                 reactions: []
             }, ...prev]);
             setCommentText("");
+            
+            // Reset textarea height
+            const textarea = document.getElementById("main-comment-textarea");
+            if (textarea) textarea.style.height = 'auto';
         } else {
             setActionError(res.error || "Failed to post comment.");
         }
@@ -831,17 +881,67 @@ export default function CharacterDetailsPage() {
 
                         <form onSubmit={handleCommentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
                             <textarea
+                                id="main-comment-textarea"
                                 value={commentText}
-                                onChange={(e) => setCommentText(e.target.value)}
+                                onChange={(e) => {
+                                    setCommentText(e.target.value);
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        if (typeof window !== 'undefined' && window.innerWidth > 768) {
+                                            e.preventDefault();
+                                            handleCommentSubmit();
+                                        }
+                                    }
+                                }}
                                 placeholder="Add a comment..."
                                 disabled={isCommenting}
-                                rows={3}
-                                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', resize: 'vertical' }}
+                                rows={2}
+                                style={{ 
+                                    width: '100%', 
+                                    padding: '0.85rem 1rem', 
+                                    borderRadius: 'var(--radius-lg)', 
+                                    border: '1px solid var(--border-light)', 
+                                    backgroundColor: 'var(--bg-secondary)', 
+                                    color: 'var(--text-primary)', 
+                                    resize: 'none',
+                                    minHeight: '60px',
+                                    maxHeight: '200px',
+                                    outline: 'none',
+                                    fontSize: '0.95rem',
+                                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)',
+                                    transition: 'border-color 0.2s, box-shadow 0.2s'
+                                }}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = 'var(--accent-primary)';
+                                    e.target.style.boxShadow = '0 0 0 1px var(--accent-primary)';
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = 'var(--border-light)';
+                                    e.target.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.05)';
+                                }}
                             />
                             <button
                                 type="submit"
                                 disabled={isCommenting || !commentText.trim()}
-                                style={{ padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-lg)', border: 'none', backgroundColor: 'var(--accent-primary)', color: 'white', cursor: (isCommenting || !commentText.trim()) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 600, alignSelf: 'flex-start' }}
+                                style={{ 
+                                    padding: '0.75rem 1.5rem', 
+                                    borderRadius: 'var(--radius-lg)', 
+                                    border: 'none', 
+                                    backgroundColor: 'var(--accent-primary)', 
+                                    color: 'white', 
+                                    cursor: (isCommenting || !commentText.trim()) ? 'not-allowed' : 'pointer', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    fontSize: '0.95rem', 
+                                    fontWeight: 600, 
+                                    alignSelf: 'flex-end',
+                                    opacity: (isCommenting || !commentText.trim()) ? 0.6 : 1,
+                                    transition: 'opacity 0.2s'
+                                }}
                             >
                                 {isCommenting ? (
                                     <><Loader2 size={18} className="spinner" style={{ animation: 'spin 1s linear infinite', marginRight: '8px' }} /> Posting...</>
