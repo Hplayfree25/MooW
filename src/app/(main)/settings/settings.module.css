@@ -493,6 +493,53 @@ input:checked+.slider:before {
     border: 1px solid var(--border-color);
 }
 
+.tabsHeader {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tabLink {
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.tabLink:hover {
+    color: var(--text-primary);
+}
+
+.tabLinkActive {
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+}
+
+.apiForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.customApiSection {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
 @media (max-width: 768px) {
     .settingsLayout {
         flex-direction: column;
@@ -501,10 +548,32 @@ input:checked+.slider:before {
     .settingsTabs {
         width: 100%;
         order: 1;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0.5rem;
+    }
+
+    .tabBtn {
+        white-space: nowrap;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
     }
 
     .settingsContent {
         width: 100%;
         order: 2;
+    }
+
+    .formPanel {
+        padding: 1.25rem;
+    }
+
+    .tabsHeader {
+        gap: 0.25rem;
+    }
+
+    .tabLink {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
     }
 }

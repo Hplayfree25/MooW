@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useActionState, useEffect, useRef } from "react";
-import { Plus, Trash2, Loader2, X, CheckCircle, Cpu, Zap, Edit2, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Loader2, X, CheckCircle, Cpu, Zap, Edit2, AlertTriangle, Save } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { CustomDropdown } from "@/components/CustomDropdown";
@@ -16,9 +16,9 @@ interface ApiSettingsModalProps {
 }
 
 export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: ApiSettingsModalProps) {
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [editingConfigId, setEditingConfigId] = useState<string | null>(null);
     const [apiMode, setApiMode] = useState<"our" | "custom">("our");
+    const [isAddingCustom, setIsAddingCustom] = useState(false);
+    const [editingConfig, setEditingConfig] = useState<any>(null);
 
     const [addState, addFormAction, isAddPending] = useActionState(addApiAction, null);
     const [editState, editFormAction, isEditPending] = useActionState(editApiAction, null);
@@ -29,9 +29,7 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
 
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
-    const [testingConfigId, setTestingConfigId] = useState<string | null>(null);
 
-    const [tempConfigName, setTempConfigName] = useState("");
     const [tempApiUrl, setTempApiUrl] = useState("");
     const [tempApiKey, setTempApiKey] = useState("");
     const [selectedModel, setSelectedModel] = useState("");
@@ -39,66 +37,68 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
     const [customPrompt, setCustomPrompt] = useState("");
 
     const [isTestingConnection, setIsTestingConnection] = useState(false);
-    const [testResult, setTestResult] = useState<{ success: boolean, message: string } | null>(null);
     const [showApiKey, setShowApiKey] = useState(false);
 
     const endpointSuffixes = ["/v1", "/v1/chat/completions", "/v1/models", "/api"];
     const fetchModelsTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const lastAddStateRef = useRef<any>(null);
-    const lastEditStateRef = useRef<any>(null);
+    const ourModelsFormRef = useRef<HTMLFormElement>(null);
+    const customFormRef = useRef<HTMLFormElement>(null);
+
+    const ourConfig = apiConfigs?.find(api => api.apiUrl === "/api/v1" || (api.apiUrl.includes("/api/v1") && !api.apiUrl.includes("openai.com")));
+
+    const prevAddStateRef = useRef<any>(addState);
+    const prevEditStateRef = useRef<any>(editState);
 
     useEffect(() => {
-        if (addState?.success && addState !== lastAddStateRef.current) {
-            lastAddStateRef.current = addState;
-            toast.success("New API Configuration added!", {
-                icon: <CheckCircle className="animate-bounce" size={18} style={{ color: '#10b981' }} />,
-                position: "bottom-center"
-            });
-            resetAddModal();
-            onRefresh?.();
-        } else if (addState?.error && addState !== lastAddStateRef.current) {
-            lastAddStateRef.current = addState;
-            toast.error(addState.error);
+        if (addState !== prevAddStateRef.current) {
+            prevAddStateRef.current = addState;
+            if (addState?.success) {
+                toast.success("API configuration saved!");
+                resetForm();
+                onRefresh?.();
+            } else if (addState?.error) {
+                toast.error(addState.error);
+            }
         }
-    }, [addState, onRefresh]);
+        if (editState !== prevEditStateRef.current) {
+            prevEditStateRef.current = editState;
+            if (editState?.success) {
+                toast.success("API configuration saved!");
+                resetForm();
+                onRefresh?.();
+            } else if (editState?.error) {
+                toast.error(editState.error);
+            }
+        }
+    }, [addState, editState, onRefresh]);
 
     useEffect(() => {
-        if (editState?.success && editState !== lastEditStateRef.current) {
-            lastEditStateRef.current = editState;
-            toast.success("API Configuration updated!", {
-                icon: <CheckCircle className="animate-bounce" size={18} style={{ color: '#10b981' }} />,
-                position: "bottom-center"
-            });
-            resetAddModal();
-            onRefresh?.();
-        } else if (editState?.error && editState !== lastEditStateRef.current) {
-            lastEditStateRef.current = editState;
-            toast.error(editState.error);
+        if (apiMode === 'our' && ourConfig) {
+            setSelectedModel(ourConfig.modelName || "");
+            setPromptProcessing(ourConfig.promptProcessing || "none");
+            setCustomPrompt(ourConfig.customPrompt || "");
+            
+            if (!ourConfig.isDefault) {
+                handleSetDefault(ourConfig.id);
+            }
+        } else if (apiMode === 'our' && !ourConfig) {
+            setSelectedModel("");
+            setPromptProcessing("none");
+            setCustomPrompt("");
         }
-    }, [editState, onRefresh]);
+    }, [apiMode, ourConfig]);
 
     const handleAppendEndpoint = (suffix: string) => {
         const base = tempApiUrl.replace(/\/+$/, "");
-        if (!base.endsWith(suffix)) {
-            setTempApiUrl(base + suffix);
-        }
+        if (!base.endsWith(suffix)) setTempApiUrl(base + suffix);
     };
 
     const parseApiError = (status: number, body: string): string => {
         try {
             const json = JSON.parse(body);
-            const msg = json?.error?.message || json?.message || json?.detail || "";
-            if (status === 401) return "Invalid API Key. Please check your key and try again.";
-            if (status === 403) return "Access denied. Your API key may not have the required permissions.";
-            if (status === 404) return "Endpoint not found. Try appending a different suffix (e.g. /v1) to your URL.";
-            if (status === 429) return "Rate limit exceeded. Please wait a moment and try again.";
-            if (status >= 500) return `Server error (${status}). The API provider may be experiencing issues.`;
-            if (msg) return msg.slice(0, 200);
-            return `Request failed with status ${status}.`;
+            return json?.error?.message || json?.message || `Error ${status}`;
         } catch {
-            if (status === 401) return "Invalid API Key. Please check your key and try again.";
-            if (status === 404) return "Endpoint not found. Try appending a different suffix to your URL.";
-            return `Request failed with status ${status}.`;
+            return `Request failed (${status})`;
         }
     };
 
@@ -112,26 +112,19 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
             apiKey = "internal"; 
         }
 
-        if (!apiUrl || (!apiKey && currentMode === "custom" && !editingConfigId)) return;
+        if (!apiUrl || (!apiKey && currentMode === "custom" && !editingConfig)) return;
 
         setIsFetchingModels(true);
         setFetchError("");
 
         try {
-            let modelsUrl = apiUrl.replace(/\/+$/, "");
-            modelsUrl = modelsUrl.replace(/\/(chat\/completions|models)$/, "");
-            if (!modelsUrl.endsWith("/v1")) {
-                modelsUrl += "/v1";
-            }
+            let modelsUrl = apiUrl.replace(/\/+$/, "").replace(/\/(chat\/completions|models)$/, "");
+            if (!modelsUrl.endsWith("/v1")) modelsUrl += "/v1";
             modelsUrl += "/models";
 
-            const res = await fetch(modelsUrl, {
-                headers: { "Authorization": `Bearer ${apiKey}` },
-            });
-
+            const res = await fetch(modelsUrl, { headers: { "Authorization": `Bearer ${apiKey}` } });
             if (!res.ok) {
-                const text = await res.text();
-                setFetchError(parseApiError(res.status, text));
+                setFetchError("Could not load models");
                 setModels([]);
                 return;
             }
@@ -143,13 +136,8 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
             }));
 
             setModels(fetchedModels);
-            if (fetchedModels.length > 0 && !selectedModel) {
-                setSelectedModel(fetchedModels[0].id);
-            }
+            if (fetchedModels.length > 0 && !selectedModel) setSelectedModel(fetchedModels[0].id);
         } catch (err: any) {
-            if (err.name !== "AbortError") {
-                setFetchError("Could not connect to the API. Please check your URL.");
-            }
             setModels([]);
         } finally {
             setIsFetchingModels(false);
@@ -157,99 +145,61 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
     };
 
     useEffect(() => {
-        if (fetchModelsTimerRef.current) {
-            clearTimeout(fetchModelsTimerRef.current);
-        }
+        if (fetchModelsTimerRef.current) clearTimeout(fetchModelsTimerRef.current);
 
         if (apiMode === "our") {
             fetchModelsTimerRef.current = setTimeout(() => {
                 handleFetchModels(window.location.origin + "/api/v1", "internal", "our");
-            }, 800);
+            }, 500);
         } else if (tempApiUrl && tempApiKey && tempApiKey.length >= 8) {
             fetchModelsTimerRef.current = setTimeout(() => {
                 handleFetchModels(tempApiUrl, tempApiKey, "custom");
             }, 800);
-        } else if (!editingConfigId) {
-            setModels([]);
         }
 
-        return () => {
-            if (fetchModelsTimerRef.current) {
-                clearTimeout(fetchModelsTimerRef.current);
-            }
-        };
+        return () => { if (fetchModelsTimerRef.current) clearTimeout(fetchModelsTimerRef.current); };
     }, [tempApiUrl, tempApiKey, apiMode]);
 
     const handleTestConnection = async () => {
-        let chatUrl = tempApiUrl;
-        let authKey = tempApiKey;
+        let chatUrl = apiMode === 'our' ? window.location.origin + "/api/v1" : tempApiUrl;
+        let authKey = apiMode === 'our' ? "internal" : tempApiKey;
 
-        if (apiMode === "our") {
-            chatUrl = window.location.origin + "/api/v1";
-            authKey = "internal";
+        if (!chatUrl || (!authKey && !editingConfig && apiMode === 'custom')) {
+            toast.error("Missing URL or Key");
+            return;
         }
 
-        if (!chatUrl) {
-            setFetchError("Please enter your API URL first.");
-            return;
-        }
-        if (!authKey && !editingConfigId) {
-            setFetchError("Please enter your API Key first.");
-            return;
-        }
-        if (!selectedModel) {
-            setFetchError("Please select or type a model name first.");
-            return;
-        }
         setIsTestingConnection(true);
-        setTestResult(null);
-        setFetchError("");
         try {
-            chatUrl = chatUrl.replace(/\/+$/, "");
-            chatUrl = chatUrl.replace(/\/(chat\/completions|models)$/, "");
-            if (!chatUrl.endsWith("/v1")) {
-                chatUrl += "/v1";
-            }
+            chatUrl = chatUrl.replace(/\/+$/, "").replace(/\/(chat\/completions|models)$/, "");
+            if (!chatUrl.endsWith("/v1")) chatUrl += "/v1";
             chatUrl += "/chat/completions";
-
-            if (editingConfigId && !authKey && apiMode === "custom") {
-                setFetchError("Please enter the API key again to test the connection.");
-                setIsTestingConnection(false);
-                return;
-            }
 
             const res = await fetch(chatUrl, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${authKey}`,
-                },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authKey}` },
                 body: JSON.stringify({
                     model: selectedModel,
-                    messages: [{ role: "user", content: "Hello! How are you?" }],
-                    max_tokens: 100,
+                    messages: [{ role: "user", content: "hi" }],
+                    max_tokens: 10
                 }),
             });
 
             if (res.ok) {
-                const data = await res.json();
-                const reply = data.choices?.[0]?.message?.content || "(No response content)";
-                setTestResult(null);
-                toast.success("AI Connected!", {
-                    icon: <Cpu className="animate-pulse" size={18} style={{ color: 'var(--accent-primary)' }} />,
-                });
+                toast.success("AI Connected!");
             } else {
                 const text = await res.text();
-                setTestResult({ success: false, message: parseApiError(res.status, text) });
+                toast.error(parseApiError(res.status, text));
             }
         } catch (err: any) {
-            setTestResult({ success: false, message: "Could not connect to the API. Please check your URL and try again." });
+            toast.error("Connection failed");
         } finally {
             setIsTestingConnection(false);
         }
     };
 
     const handleDelete = async (configId: string) => {
+        if (!confirm("Delete this configuration?")) return;
         setDeletingId(configId);
         try {
             await deleteApiAction(configId);
@@ -263,130 +213,55 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
         setSettingDefaultId(configId);
         try {
             await setDefaultApiAction(configId);
-            toast.success("Set as default API configuration.");
             onRefresh?.();
         } finally {
             setSettingDefaultId(null);
         }
     };
 
-    const startEditMode = (config: any) => {
-        setEditingConfigId(config.id);
-        
-        const isOur = config.apiUrl === '/api/v1' || (config.apiUrl.includes('/api/v1') && !config.apiUrl.includes('openai.com'));
-        setApiMode(isOur ? "our" : "custom");
-
-        setTempConfigName(config.configName || "");
-        setTempApiUrl(config.apiUrl || "");
-        setTempApiKey("");
-        setSelectedModel(config.modelName || "");
-        setPromptProcessing(config.promptProcessing || "none");
-        setCustomPrompt(config.customPrompt || "");
-
-        let loadedModels: { id: string; name: string }[] = [];
-        try {
-            if (config.modelList) {
-                const parsedIds = JSON.parse(config.modelList);
-                if (Array.isArray(parsedIds)) {
-                    loadedModels = parsedIds.map(id => ({ id, name: id }));
-                }
-            }
-        } catch (e) { }
-
-        if (loadedModels.length === 0 && config.modelName) {
-            loadedModels = [{ id: config.modelName, name: config.modelName }];
-        }
-
-        setModels(loadedModels);
-        setIsAddModalOpen(true);
-    };
-
-    const handleTestExistingConfig = async (api: any) => {
-        setTestingConfigId(api.id);
-        try {
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chatId: 'test-connection',
-                    characterId: 'test',
-                    configId: api.id,
-                    userName: 'User',
-                    messages: [{ role: 'user', content: 'Hello, respond with a short greeting.' }],
-                    testMode: true,
-                }),
-            });
-
-            const reader = res.body?.getReader();
-            const decoder = new TextDecoder();
-            if (!reader) throw new Error("No reader");
-
-            if (!res.ok) {
-                return;
-            }
-
-            let fullReply = "";
-            let buffer = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
-
-                for (const line of lines) {
-                    if (line.trim() === '') continue;
-                    if (line.startsWith('data: ')) {
-                        const dataStr = line.slice(6);
-                        if (dataStr === '[DONE]') continue;
-                        try {
-                            const parsed = JSON.parse(dataStr);
-                            if (parsed.type === 'content') {
-                                fullReply += parsed.text;
-                            }
-                        } catch (e) { }
-                    }
-                }
-            }
-
-            if (fullReply) {
-                toast.success("AI Connected!", {
-                    icon: <Cpu className="animate-pulse" size={18} style={{ color: 'var(--accent-primary)' }} />,
-                });
-            }
-        } catch (err: any) {
-        } finally {
-            setTestingConfigId(null);
-        }
-    };
-
-    const resetAddModal = () => {
-        setIsAddModalOpen(false);
-        setEditingConfigId(null);
+    const resetForm = () => {
+        setEditingConfig(null);
+        setIsAddingCustom(false);
         setModels([]);
         setFetchError("");
-        setTempConfigName("");
         setTempApiUrl("");
         setTempApiKey("");
         setSelectedModel("");
         setPromptProcessing("none");
         setCustomPrompt("");
-        setTestResult(null);
-        setShowApiKey(false);
-        setApiMode("our");
+    };
+
+    const startEdit = (config: any) => {
+        setEditingConfig(config);
+        setIsAddingCustom(true);
+        setTempApiUrl(config.apiUrl);
+        setSelectedModel(config.modelName);
+        setPromptProcessing(config.promptProcessing);
+        setCustomPrompt(config.customPrompt || "");
+        setTempApiKey("");
+    };
+
+    const handleMainSave = () => {
+        if (apiMode === 'our') {
+            ourModelsFormRef.current?.requestSubmit();
+        } else if (isAddingCustom) {
+            customFormRef.current?.requestSubmit();
+        } else {
+            onClose();
+        }
     };
 
     const promptProcessingOptions = [
-        { value: "none", label: "None — no explicit processing" },
-        { value: "merge", label: "Merge consecutive same-role messages" },
-        { value: "semi-strict", label: "Semi-strict — merge + 1 system message" },
-        { value: "strict", label: "Strict — merge + 1 system + user first" },
-        { value: "single-user", label: "Single user message — collapse all" },
+        { value: "none", label: "None" },
+        { value: "merge", label: "Merge Same-Role" },
+        { value: "semi-strict", label: "Semi-strict" },
+        { value: "strict", label: "Strict" },
+        { value: "single-user", label: "Single User" },
     ];
 
     if (!isOpen) return null;
+
+    const customConfigs = apiConfigs?.filter(api => api.apiUrl !== "/api/v1" && !(api.apiUrl.includes("/api/v1") && !api.apiUrl.includes("openai.com"))) || [];
 
     return (
         <div className={styles.modalOverlay} style={{ zIndex: 1000 }}>
@@ -395,380 +270,163 @@ export function ApiSettingsModal({ isOpen, onClose, apiConfigs, onRefresh }: Api
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}
+                style={{ maxWidth: '600px', width: '100%', maxHeight: '95vh', overflowY: 'auto' }}
             >
                 <div className={styles.modalHeader}>
                     <h3>API Settings</h3>
                     <button onClick={onClose} className={styles.iconBtn}><X size={20} /></button>
                 </div>
 
-                <div className={styles.modalBody}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ margin: 0, color: 'var(--text-secondary)' }}>Your Configurations</h4>
-                        <button onClick={() => { resetAddModal(); setIsAddModalOpen(true); }} className={styles.primaryBtn} style={{ padding: '0.4rem', borderRadius: '50%' }}>
-                            <Plus size={18} />
+                <div className={styles.modalBody} style={{ paddingBottom: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-light)' }}>
+                        <button 
+                            onClick={() => { setApiMode('our'); resetForm(); }}
+                            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: apiMode === 'our' ? '2px solid var(--accent-primary)' : '2px solid transparent', color: apiMode === 'our' ? 'var(--text-primary)' : 'var(--text-tertiary)', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                            Our Models
+                        </button>
+                        <button 
+                            onClick={() => { setApiMode('custom'); resetForm(); }}
+                            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: apiMode === 'custom' ? '2px solid var(--accent-primary)' : '2px solid transparent', color: apiMode === 'custom' ? 'var(--text-primary)' : 'var(--text-tertiary)', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                            Custom APIs
                         </button>
                     </div>
 
-                    <div className={styles.apiList}>
-                        {apiConfigs && apiConfigs.length > 0 ? (
-                            apiConfigs.map(api => (
-                                <div key={api.id} className={styles.apiCard} style={api.isDefault ? { borderColor: 'var(--accent-primary)', boxShadow: '0 0 0 1px var(--accent-primary)' } : {}}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                                            {api.configName}
-                                            {api.isDefault && <span style={{ fontSize: '0.65rem', background: 'var(--accent-primary)', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>DEFAULT</span>}
-                                        </h4>
-                                        <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
-                                            <button
-                                                onClick={() => handleSetDefault(api.id)}
-                                                className={styles.iconBtn}
-                                                disabled={api.isDefault || settingDefaultId === api.id}
-                                                title={api.isDefault ? "Current Default" : "Set as Default"}
-                                            >
-                                                {settingDefaultId === api.id ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle size={16} style={{ color: api.isDefault ? 'var(--accent-primary)' : 'var(--text-tertiary)' }} />}
-                                            </button>
-                                            <button
-                                                onClick={() => handleTestExistingConfig(api)}
-                                                className={styles.iconBtn}
-                                                disabled={testingConfigId === api.id}
-                                                title="Test Connection"
-                                            >
-                                                {testingConfigId === api.id ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />}
-                                            </button>
-                                            <button
-                                                onClick={() => startEditMode(api)}
-                                                className={styles.iconBtn}
-                                                title="Edit"
-                                            >
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(api.id)}
-                                                className={styles.iconBtn}
-                                                disabled={deletingId === api.id}
-                                                title="Delete"
-                                            >
-                                                {deletingId === api.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
-                                            </button>
+                    {apiMode === 'our' ? (
+                        <form ref={ourModelsFormRef} action={ourConfig ? editFormAction : addFormAction} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <input type="hidden" name="configName" value="Our Model" />
+                            <input type="hidden" name="apiUrl" value="/api/v1" />
+                            <input type="hidden" name="apiKey" value="internal" />
+                            {ourConfig && <input type="hidden" name="configId" value={ourConfig.id} />}
+                            
+                            <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.2)', color: '#eab308', fontSize: '0.8rem', display: 'flex', gap: '0.5rem' }}>
+                                <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                                <p style={{ margin: 0 }}>Built-in models are currently in beta.</p>
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label className={styles.label}>Model Selection</label>
+                                <input type="hidden" name="modelName" value={selectedModel} />
+                                <CustomDropdown
+                                    options={models.map(m => ({ id: m.id, label: m.name }))}
+                                    value={selectedModel}
+                                    onChange={v => {
+                                        setSelectedModel(v);
+                                        setTimeout(() => {
+                                            ourModelsFormRef.current?.requestSubmit();
+                                        }, 0);
+                                    }}
+                                />
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                                <label className={styles.label}>Prompt Processing</label>
+                                <input type="hidden" name="promptProcessing" value={promptProcessing} />
+                                <CustomDropdown
+                                    options={promptProcessingOptions.map(o => ({ id: o.value, label: o.label }))}
+                                    value={promptProcessing}
+                                    onChange={v => {
+                                        setPromptProcessing(v);
+                                        setTimeout(() => {
+                                            ourModelsFormRef.current?.requestSubmit();
+                                        }, 0);
+                                    }}
+                                />
+                            </div>
+                        </form>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            {!isAddingCustom ? (
+                                <>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <h4 style={{ margin: 0 }}>Custom Configurations</h4>
+                                        <button onClick={() => setIsAddingCustom(true)} className={styles.primaryBtn} style={{ padding: '0.4rem', borderRadius: '50%' }}>
+                                            <Plus size={18} />
+                                        </button>
+                                    </div>
+                                    <div className={styles.apiList}>
+                                        {customConfigs.length > 0 ? (
+                                            customConfigs.map(api => (
+                                                <div key={api.id} className={styles.apiCard} style={api.isDefault ? { borderColor: 'var(--accent-primary)', cursor: 'pointer' } : { cursor: 'pointer' }} onClick={() => handleSetDefault(api.id)}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            {api.isDefault ? <CheckCircle size={18} style={{ color: 'var(--accent-primary)' }} /> : <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid var(--border-color)' }} />}
+                                                            <div>
+                                                                <h4 style={{ margin: 0 }}>{api.configName}</h4>
+                                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{api.modelName}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: '0.25rem' }} onClick={e => e.stopPropagation()}>
+                                                            <button onClick={() => startEdit(api)} className={styles.iconBtn}><Edit2 size={16} /></button>
+                                                            <button onClick={() => handleDelete(api.id)} className={styles.iconBtn} disabled={deletingId === api.id} style={{ color: '#ef4444' }}><Trash2 size={16} /></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p style={{ textAlign: 'center', color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '1rem 0' }}>No custom APIs configured.</p>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <form ref={customFormRef} action={editingConfig ? editFormAction : addFormAction} style={{ border: '1px solid var(--border-light)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                        <h4 style={{ margin: 0 }}>{editingConfig ? 'Edit Configuration' : 'Add New Custom API'}</h4>
+                                        <button type="button" onClick={resetForm} className={styles.iconBtn}><X size={18} /></button>
+                                    </div>
+                                    {editingConfig && <input type="hidden" name="configId" value={editingConfig.id} />}
+                                    
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.label}>Name</label>
+                                        <input name="configName" defaultValue={editingConfig?.configName} className={styles.input} placeholder="e.g. My API" required />
+                                    </div>
+
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.label}>URL</label>
+                                        <input name="apiUrl" value={tempApiUrl} onChange={e => setTempApiUrl(e.target.value)} className={styles.input} placeholder="https://..." required />
+                                        <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
+                                            {endpointSuffixes.map(s => <button key={s} type="button" onClick={() => handleAppendEndpoint(s)} className={styles.apiBadge} style={{ cursor: 'pointer', border: '1px solid var(--border-light)', background: 'none', fontSize: '0.65rem' }}>{s}</button>)}
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                                        <span className={styles.apiBadge}>{api.modelName}</span>
+
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.label}>Key {editingConfig && <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>(Blank to keep)</span>}</label>
+                                        <input name="apiKey" type="password" value={tempApiKey} onChange={e => setTempApiKey(e.target.value)} className={styles.input} placeholder="sk-..." required={!editingConfig} />
                                     </div>
-                                    <p className={styles.apiSecret} style={{ marginTop: '0.5rem' }}>••••••••••••{api.apiKey?.slice(-8) || "••••"}</p>
-                                </div>
-                            ))
-                        ) : (
-                            <p style={{ color: 'var(--text-tertiary)', fontStyle: 'italic', textAlign: 'center', padding: '2rem 0' }}>No API Configurations added yet.</p>
+
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.label}>Model</label>
+                                        <input name="modelName" value={selectedModel} onChange={e => setSelectedModel(e.target.value)} className={styles.input} placeholder="gpt-4" required />
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.modalFooter}>
+                    <div style={{ display: 'flex', gap: '0.75rem', width: '100%', justifyContent: 'flex-end' }}>
+                        <button type="button" onClick={onClose} className={styles.secondaryBtn}>{apiMode === 'our' ? 'Close' : 'Cancel'}</button>
+                        
+                        <button 
+                            type="button" 
+                            onClick={handleTestConnection} 
+                            className={apiMode === 'our' ? styles.primaryBtn : styles.secondaryBtn} 
+                            style={apiMode === 'our' ? { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', background: isTestingConnection ? 'var(--bg-tertiary)' : 'var(--accent-primary)', color: isTestingConnection ? 'var(--text-secondary)' : '#fff', fontWeight: 600, border: 'none', borderRadius: 'var(--radius-md)' } : { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', border: '1px solid var(--border-light)' }}
+                            disabled={isTestingConnection}
+                        >
+                            {isTestingConnection ? <><Loader2 className="animate-spin" size={16} /> Testing...</> : <><Zap size={16} fill={apiMode === 'our' ? "currentColor" : "none"} /> {apiMode === 'our' ? 'Test AI Connection' : 'Test AI Integration'}</>}
+                        </button>
+
+                        {apiMode !== 'our' && (
+                            <button type="button" onClick={handleMainSave} className={styles.primaryBtn} disabled={isAddPending || isEditPending || settingDefaultId !== null}>
+                                {(isAddPending || isEditPending) ? <Loader2 className="animate-spin" size={16} /> : <><Save size={16} /> Save</>}
+                            </button>
                         )}
                     </div>
                 </div>
             </motion.div>
-
-            <AnimatePresence>
-                {isAddModalOpen && (
-                    <div className={styles.modalOverlay} style={{ zIndex: 1001 }}>
-                        <motion.div
-                            className={styles.modalContent}
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            style={{ maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}
-                        >
-                            <div className={styles.modalHeader}>
-                                <h3>{editingConfigId ? "Edit API Configuration" : "Add API Configuration"}</h3>
-                                <button onClick={resetAddModal} className={styles.iconBtn}><X size={20} /></button>
-                            </div>
-                            <form action={editingConfigId ? editFormAction : addFormAction} className={styles.modalBody}>
-                                {editingConfigId && <input type="hidden" name="configId" value={editingConfigId} />}
-
-                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-light)' }}>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setApiMode('our')} 
-                                        style={{ 
-                                            padding: '0.5rem 1rem', 
-                                            background: 'transparent', 
-                                            border: 'none', 
-                                            borderBottom: apiMode === 'our' ? '2px solid var(--accent-primary)' : '2px solid transparent', 
-                                            color: apiMode === 'our' ? 'var(--text-primary)' : 'var(--text-tertiary)', 
-                                            fontWeight: apiMode === 'our' ? 'bold' : 'normal', 
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
-                                        Our Models
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setApiMode('custom')} 
-                                        style={{ 
-                                            padding: '0.5rem 1rem', 
-                                            background: 'transparent', 
-                                            border: 'none', 
-                                            borderBottom: apiMode === 'custom' ? '2px solid var(--accent-primary)' : '2px solid transparent', 
-                                            color: apiMode === 'custom' ? 'var(--text-primary)' : 'var(--text-tertiary)', 
-                                            fontWeight: apiMode === 'custom' ? 'bold' : 'normal', 
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
-                                        Custom
-                                    </button>
-                                </div>
-
-                                {apiMode === 'custom' ? (
-                                    <div className={styles.inputGroup}>
-                                        <label className={styles.label}>Configuration Name</label>
-                                        <input
-                                            name="configName"
-                                            type="text"
-                                            className={styles.input}
-                                            placeholder="e.g. My OpenRouter"
-                                            value={tempConfigName}
-                                            onChange={(e) => setTempConfigName(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                ) : (
-                                    <input type="hidden" name="configName" value={tempConfigName || selectedModel || "Built-in Model"} />
-                                )}
-
-                                {apiMode === 'our' ? (
-                                    <>
-                                        <input type="hidden" name="apiUrl" value="/api/v1" />
-                                        <input type="hidden" name="apiKey" value="internal" />
-                                        
-                                        <div style={{
-                                            padding: '0.75rem',
-                                            borderRadius: 'var(--radius-md)',
-                                            background: 'rgba(234, 179, 8, 0.1)',
-                                            border: '1px solid rgba(234, 179, 8, 0.2)',
-                                            color: '#eab308',
-                                            fontSize: '0.85rem',
-                                            display: 'flex',
-                                            gap: '0.5rem',
-                                            alignItems: 'flex-start',
-                                            marginBottom: '1rem'
-                                        }}>
-                                            <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-                                            <div>
-                                                <strong>Notice:</strong> These models are currently under development. Performance and availability may fluctuate.
-                                            </div>
-                                        </div>
-
-                                        <div className={styles.inputGroup}>
-                                            <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                Model Selection
-                                                {isFetchingModels && <Loader2 className="animate-spin" size={14} style={{ color: 'var(--accent-primary)' }} />}
-                                            </label>
-                                            <input type="hidden" name="modelName" value={selectedModel} />
-                                            {models.length > 0 ? (
-                                                <CustomDropdown
-                                                    options={models.map(m => ({ id: m.id, label: m.name }))}
-                                                    value={selectedModel}
-                                                    onChange={(val) => setSelectedModel(val)}
-                                                />
-                                            ) : (
-                                                <div style={{
-                                                    padding: '0.6rem 1rem',
-                                                    borderRadius: 'var(--radius-full)',
-                                                    border: '1px solid var(--border-light)',
-                                                    background: 'var(--bg-secondary)',
-                                                    color: 'var(--text-tertiary)',
-                                                    fontSize: '0.875rem',
-                                                }}>
-                                                    {isFetchingModels ? "Loading models..." : "No models found"}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className={styles.inputGroup}>
-                                            <label className={styles.label}>API URL</label>
-                                            <input
-                                                name="apiUrl"
-                                                type="url"
-                                                className={styles.input}
-                                                placeholder="https://api.openai.com"
-                                                value={tempApiUrl}
-                                                onChange={(e) => setTempApiUrl(e.target.value)}
-                                                required
-                                            />
-                                            <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
-                                                {endpointSuffixes.map(suffix => (
-                                                    <button
-                                                        key={suffix}
-                                                        type="button"
-                                                        onClick={() => handleAppendEndpoint(suffix)}
-                                                        style={{
-                                                            padding: '0.15rem 0.5rem',
-                                                            fontSize: '0.7rem',
-                                                            borderRadius: 'var(--radius-sm)',
-                                                            border: '1px solid var(--border-light)',
-                                                            background: 'var(--bg-tertiary)',
-                                                            color: 'var(--text-secondary)',
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.15s ease',
-                                                            fontFamily: 'monospace',
-                                                        }}
-                                                        onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; e.currentTarget.style.color = 'var(--accent-primary)'; }}
-                                                        onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                                                    >
-                                                        {suffix}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className={styles.inputGroup}>
-                                            <label className={styles.label}>API Key {editingConfigId && <span style={{ fontSize: '0.7rem', fontStyle: 'italic', fontWeight: 'normal', color: 'var(--text-tertiary)' }}>(Leave blank to keep current)</span>}</label>
-                                            <div style={{ position: 'relative' }}>
-                                                <input
-                                                    name="apiKey"
-                                                    type={showApiKey ? "text" : "password"}
-                                                    className={styles.input}
-                                                    style={{ paddingRight: '2.5rem' }}
-                                                    placeholder={editingConfigId ? "•••••••••••••" : "sk-..."}
-                                                    value={tempApiKey}
-                                                    onChange={(e) => setTempApiKey(e.target.value)}
-                                                    autoComplete="off"
-                                                    required={!editingConfigId}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowApiKey(!showApiKey)}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        right: '0.6rem',
-                                                        top: '50%',
-                                                        transform: 'translateY(-50%)',
-                                                        background: 'transparent',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        color: 'var(--text-tertiary)',
-                                                        padding: '0.25rem',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                    }}
-                                                    title={showApiKey ? "Hide API Key" : "Show API Key"}
-                                                >
-                                                    {showApiKey ? (
-                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                                                    ) : (
-                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className={styles.inputGroup}>
-                                            <label className={styles.label}>Model</label>
-                                            <input
-                                                name="modelName"
-                                                type="text"
-                                                className={styles.input}
-                                                placeholder="gpt-4o, claude-3-5-sonnet..."
-                                                value={selectedModel}
-                                                onChange={(e) => setSelectedModel(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className={styles.inputGroup}>
-                                            <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                Model Selection
-                                                {isFetchingModels && <Loader2 className="animate-spin" size={14} style={{ color: 'var(--accent-primary)' }} />}
-                                            </label>
-                                            {models.length > 0 ? (
-                                                <CustomDropdown
-                                                    options={models.map(m => ({ id: m.id, label: m.name }))}
-                                                    value={selectedModel}
-                                                    onChange={(val) => setSelectedModel(val)}
-                                                />
-                                            ) : (
-                                                <div style={{
-                                                    padding: '0.6rem 1rem',
-                                                    borderRadius: 'var(--radius-full)',
-                                                    border: '1px solid var(--border-light)',
-                                                    background: 'var(--bg-secondary)',
-                                                    color: 'var(--text-tertiary)',
-                                                    fontSize: '0.875rem',
-                                                }}>
-                                                    {isFetchingModels
-                                                        ? "Loading models..."
-                                                        : (!tempApiUrl || (!tempApiKey && !editingConfigId))
-                                                            ? "Enter API URL & Key to load models"
-                                                            : fetchError
-                                                                ? "Could not load models"
-                                                                : "No models found"}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-
-                                {fetchError && (
-                                    <div style={{
-                                        padding: '0.5rem 0.75rem',
-                                        borderRadius: 'var(--radius-md)',
-                                        background: 'rgba(239, 68, 68, 0.08)',
-                                        border: '1px solid rgba(239, 68, 68, 0.2)',
-                                        color: '#ef4444',
-                                        fontSize: '0.8rem',
-                                    }}>
-                                        {fetchError}
-                                    </div>
-                                )}
-
-                                <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
-                                    <label className={styles.label}>Prompt Post Processing</label>
-                                    <input type="hidden" name="promptProcessing" value={promptProcessing} />
-                                    <CustomDropdown
-                                        options={promptProcessingOptions.map(opt => ({ id: opt.value, label: opt.label }))}
-                                        value={promptProcessing}
-                                        onChange={(val) => setPromptProcessing(val)}
-                                    />
-                                </div>
-
-                                <div className={styles.inputGroup}>
-                                    <label className={styles.label}>Custom Prompt (Optional)</label>
-                                    <textarea
-                                        name="customPrompt"
-                                        rows={2}
-                                        className={styles.input}
-                                        placeholder="Optional system prompt override..."
-                                        value={customPrompt}
-                                        onChange={(e) => setCustomPrompt(e.target.value)}
-                                    ></textarea>
-                                </div>
-
-                                <input type="hidden" name="modelList" value={JSON.stringify(models.map(m => m.id))} />
-
-                                {testResult && !testResult.success && (
-                                    <div style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                                        {testResult.message}
-                                    </div>
-                                )}
-
-                                <div className={styles.modalFooter}>
-                                    <button type="button" onClick={resetAddModal} className={styles.secondaryBtn}>Cancel</button>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button type="button" onClick={handleTestConnection} className={styles.secondaryBtn} disabled={isTestingConnection}>
-                                            {isTestingConnection ? <Loader2 className="animate-spin" size={16} /> : "Test Connection"}
-                                        </button>
-                                        <button type="submit" className={styles.primaryBtn} disabled={isAddPending || isEditPending}>
-                                            {(isAddPending || isEditPending) ? <Loader2 className="animate-spin" size={16} /> : "Save API"}
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
         </div>
     );
 }
