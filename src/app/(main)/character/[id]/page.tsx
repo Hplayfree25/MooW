@@ -125,7 +125,7 @@ function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, i
     const handleReport = async () => {
         const reason = prompt("Enter reason for report:");
         if (!reason) return;
-        
+
         const res = await reportAction({ reportedCommentId: comment.id, reason });
         if (res.success) {
             toast.success("Comment reported successfully");
@@ -335,7 +335,7 @@ function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, i
                                                     padding: '0.4rem',
                                                     background: 'var(--bg-secondary)',
                                                     border: '1px solid var(--border-light)',
-                                                    borderRadius: 'var(--radius-full)', /* Fully rounded according to theme */
+                                                    borderRadius: 'var(--radius-full)',
                                                     boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
                                                 }}
                                             >
@@ -399,13 +399,13 @@ function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, i
                                 }}
                                 placeholder="Write a reply..."
                                 rows={1}
-                                style={{ 
-                                    flex: 1, 
-                                    padding: '0.6rem 0.85rem', 
-                                    borderRadius: 'var(--radius-lg)', 
-                                    border: '1px solid var(--border-light)', 
-                                    backgroundColor: 'var(--bg-secondary)', 
-                                    color: 'var(--text-primary)', 
+                                style={{
+                                    flex: 1,
+                                    padding: '0.6rem 0.85rem',
+                                    borderRadius: 'var(--radius-lg)',
+                                    border: '1px solid var(--border-light)',
+                                    backgroundColor: 'var(--bg-secondary)',
+                                    color: 'var(--text-primary)',
                                     fontSize: '0.875rem',
                                     resize: 'none',
                                     minHeight: '40px',
@@ -426,16 +426,16 @@ function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, i
                             <button
                                 onClick={submitReply}
                                 disabled={!replyText.trim()}
-                                style={{ 
+                                style={{
                                     padding: '0 1.2rem',
                                     height: '40px',
-                                    borderRadius: 'var(--radius-lg)', 
-                                    backgroundColor: 'var(--accent-primary)', 
-                                    color: 'white', 
-                                    border: 'none', 
-                                    cursor: !replyText.trim() ? 'not-allowed' : 'pointer', 
-                                    fontSize: '0.875rem', 
-                                    fontWeight: 600, 
+                                    borderRadius: 'var(--radius-lg)',
+                                    backgroundColor: 'var(--accent-primary)',
+                                    color: 'white',
+                                    border: 'none',
+                                    cursor: !replyText.trim() ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 600,
                                     transition: 'background-color 0.2s, opacity 0.2s',
                                     opacity: !replyText.trim() ? 0.6 : 1
                                 }}
@@ -649,7 +649,7 @@ export default function CharacterDetailsPage() {
                 reactions: []
             }, ...prev]);
             setCommentText("");
-            
+
             const textarea = document.getElementById("main-comment-textarea");
             if (textarea) textarea.style.height = 'auto';
         } else {
@@ -765,51 +765,51 @@ export default function CharacterDetailsPage() {
                             >
                                 <div className={styles.shareIconWrapper}>
                                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <motion.path 
-                                            d="M18 8C19.6569 8 21 6.65685 21 5C21 3.34315 19.6569 2 18 2C16.3431 2 15 3.34315 15 5C15 6.65685 16.3431 8 18 8Z" 
-                                            stroke="var(--accent-primary)" 
-                                            strokeWidth="2" 
-                                            strokeLinecap="round" 
+                                        <motion.path
+                                            d="M18 8C19.6569 8 21 6.65685 21 5C21 3.34315 19.6569 2 18 2C16.3431 2 15 3.34315 15 5C15 6.65685 16.3431 8 18 8Z"
+                                            stroke="var(--accent-primary)"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
                                             strokeLinejoin="round"
                                             initial={{ pathLength: 0, opacity: 0 }}
                                             animate={{ pathLength: 1, opacity: 1 }}
                                             transition={{ duration: 0.5, delay: 0.2 }}
                                         />
-                                        <motion.path 
-                                            d="M6 15C7.65685 15 9 13.6569 9 12C9 10.3431 7.65685 9 6 9C4.34315 9 3 10.3431 3 12C3 13.6569 4.34315 15 6 15Z" 
-                                            stroke="var(--accent-primary)" 
-                                            strokeWidth="2" 
-                                            strokeLinecap="round" 
+                                        <motion.path
+                                            d="M6 15C7.65685 15 9 13.6569 9 12C9 10.3431 7.65685 9 6 9C4.34315 9 3 10.3431 3 12C3 13.6569 4.34315 15 6 15Z"
+                                            stroke="var(--accent-primary)"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
                                             strokeLinejoin="round"
                                             initial={{ pathLength: 0, opacity: 0 }}
                                             animate={{ pathLength: 1, opacity: 1 }}
                                             transition={{ duration: 0.5, delay: 0.4 }}
                                         />
-                                        <motion.path 
-                                            d="M18 22C19.6569 22 21 20.6569 21 19C21 17.3431 19.6569 16 18 16C16.3431 16 15 17.3431 15 19C15 20.6569 16.3431 22 18 22Z" 
-                                            stroke="var(--accent-primary)" 
-                                            strokeWidth="2" 
-                                            strokeLinecap="round" 
+                                        <motion.path
+                                            d="M18 22C19.6569 22 21 20.6569 21 19C21 17.3431 19.6569 16 18 16C16.3431 16 15 17.3431 15 19C15 20.6569 16.3431 22 18 22Z"
+                                            stroke="var(--accent-primary)"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
                                             strokeLinejoin="round"
                                             initial={{ pathLength: 0, opacity: 0 }}
                                             animate={{ pathLength: 1, opacity: 1 }}
                                             transition={{ duration: 0.5, delay: 0.6 }}
                                         />
-                                        <motion.path 
-                                            d="M8.59 13.51L15.42 17.49" 
-                                            stroke="var(--accent-primary)" 
-                                            strokeWidth="2" 
-                                            strokeLinecap="round" 
+                                        <motion.path
+                                            d="M8.59 13.51L15.42 17.49"
+                                            stroke="var(--accent-primary)"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
                                             strokeLinejoin="round"
                                             initial={{ pathLength: 0, opacity: 0 }}
                                             animate={{ pathLength: 1, opacity: 1 }}
                                             transition={{ duration: 0.5, delay: 0.8 }}
                                         />
-                                        <motion.path 
-                                            d="M15.41 6.51001L8.59 10.49" 
-                                            stroke="var(--accent-primary)" 
-                                            strokeWidth="2" 
-                                            strokeLinecap="round" 
+                                        <motion.path
+                                            d="M15.41 6.51001L8.59 10.49"
+                                            stroke="var(--accent-primary)"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
                                             strokeLinejoin="round"
                                             initial={{ pathLength: 0, opacity: 0 }}
                                             animate={{ pathLength: 1, opacity: 1 }}
@@ -1056,13 +1056,13 @@ export default function CharacterDetailsPage() {
                                 placeholder="Add a comment..."
                                 disabled={isCommenting}
                                 rows={2}
-                                style={{ 
-                                    width: '100%', 
-                                    padding: '0.85rem 1rem', 
-                                    borderRadius: 'var(--radius-lg)', 
-                                    border: '1px solid var(--border-light)', 
-                                    backgroundColor: 'var(--bg-secondary)', 
-                                    color: 'var(--text-primary)', 
+                                style={{
+                                    width: '100%',
+                                    padding: '0.85rem 1rem',
+                                    borderRadius: 'var(--radius-lg)',
+                                    border: '1px solid var(--border-light)',
+                                    backgroundColor: 'var(--bg-secondary)',
+                                    color: 'var(--text-primary)',
                                     resize: 'none',
                                     minHeight: '60px',
                                     maxHeight: '200px',
@@ -1083,18 +1083,18 @@ export default function CharacterDetailsPage() {
                             <button
                                 type="submit"
                                 disabled={isCommenting || !commentText.trim()}
-                                style={{ 
-                                    padding: '0.75rem 1.5rem', 
-                                    borderRadius: 'var(--radius-lg)', 
-                                    border: 'none', 
-                                    backgroundColor: 'var(--accent-primary)', 
-                                    color: 'white', 
-                                    cursor: (isCommenting || !commentText.trim()) ? 'not-allowed' : 'pointer', 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center', 
-                                    fontSize: '0.95rem', 
-                                    fontWeight: 600, 
+                                style={{
+                                    padding: '0.75rem 1.5rem',
+                                    borderRadius: 'var(--radius-lg)',
+                                    border: 'none',
+                                    backgroundColor: 'var(--accent-primary)',
+                                    color: 'white',
+                                    cursor: (isCommenting || !commentText.trim()) ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '0.95rem',
+                                    fontWeight: 600,
                                     alignSelf: 'flex-end',
                                     opacity: (isCommenting || !commentText.trim()) ? 0.6 : 1,
                                     transition: 'opacity 0.2s'

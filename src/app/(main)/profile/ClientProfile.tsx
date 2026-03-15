@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { updateAvatarAction, updateBannerAction, updateShortBioAction, pinCharacterAction } from "../settings/actions";
 import { toggleFollowAction, toggleBadgeDisplayAction, reportAction } from "../actions";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { TVw } from "@/components/tvw";
 
 interface UserProfile {
     name: string;
@@ -366,8 +367,8 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                 {activeTab === 'about' && (
                     <div style={{ padding: '0', background: 'transparent', borderRadius: 'var(--radius-lg)', marginTop: '1rem' }}>
                         {user.aboutMe ? (
-                            <div className={styles.markdownBio} style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-                                <RichTextEditor readOnly={true} content={user.aboutMe} name="aboutMeDisplay" />
+                            <div className={styles.markdownContent} style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', padding: '1.5rem' }}>
+                                <TVw c={user.aboutMe} />
                             </div>
                         ) : (
                             <div className={styles.emptyState} style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', padding: '2rem' }}>
