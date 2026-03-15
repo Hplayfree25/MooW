@@ -266,8 +266,10 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
                                                 const { _z_sum_rz } = await import('@/lib/z_rx_sum');
                                                 const isFirst = summaryChunksSent === 0;
                                                 const flashSummary = await _z_sum_rz(reasoningBuffer, apiKey, baseUrl, isFirst);
-                                                const sumParsed = { id: "res", object: "chat.completion.chunk", created: Date.now(), model: "NeroLLM Reasoner", choices: [{ index: 0, delta: { reasoning_content: flashSummary + "\n\n" }, finish_reason: "length" }] };
-                                                controller.enqueue(encoder.encode(`data: ${JSON.stringify(sumParsed)}\n\n`));
+                                                if (flashSummary) {
+                                                    const sumParsed = { id: "res", object: "chat.completion.chunk", created: Date.now(), model: "NeroLLM Reasoner", choices: [{ index: 0, delta: { reasoning_content: flashSummary + "\n\n" }, finish_reason: "length" }] };
+                                                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(sumParsed)}\n\n`));
+                                                }
                                             }
                                             controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                                             continue;
@@ -292,9 +294,11 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
                                                     const flashSummary = await _z_sum_rz(chunkToSummarize, apiKey, baseUrl, isFirst);
                                                     summaryChunksSent++;
                                                     
-                                                    const sumParsed = { ...parsed };
-                                                    sumParsed.choices[0].delta = { reasoning_content: flashSummary + "\n\n" };
-                                                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(sumParsed)}\n\n`));
+                                                    if (flashSummary) {
+                                                        const sumParsed = { ...parsed };
+                                                        sumParsed.choices[0].delta = { reasoning_content: flashSummary + "\n\n" };
+                                                        controller.enqueue(encoder.encode(`data: ${JSON.stringify(sumParsed)}\n\n`));
+                                                    }
                                                 }
                                             }
                                             
@@ -305,9 +309,11 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
                                                         const { _z_sum_rz } = await import('@/lib/z_rx_sum');
                                                         const isFirst = summaryChunksSent === 0;
                                                         const flashSummary = await _z_sum_rz(reasoningBuffer, apiKey, baseUrl, isFirst);
-                                                        const sumParsed = { ...parsed };
-                                                        sumParsed.choices[0].delta = { reasoning_content: flashSummary + "\n\n" };
-                                                        controller.enqueue(encoder.encode(`data: ${JSON.stringify(sumParsed)}\n\n`));
+                                                        if (flashSummary) {
+                                                            const sumParsed = { ...parsed };
+                                                            sumParsed.choices[0].delta = { reasoning_content: flashSummary + "\n\n" };
+                                                            controller.enqueue(encoder.encode(`data: ${JSON.stringify(sumParsed)}\n\n`));
+                                                        }
                                                     }
                                                 }
                                                 controller.enqueue(encoder.encode(`data: ${dataStr}\n\n`));

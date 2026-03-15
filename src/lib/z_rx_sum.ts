@@ -5,6 +5,8 @@ export async function _z_sum_rz(rawRz: string, apiKey: string, baseUrl: string, 
 Raw Thoughts:
 ${rawRz}`;
 
+    const fallbackStr = isFirstChunk ? "Thinking deeply about the situation..." : "";
+
     try {
         const res = await fetch(`${baseUrl}/chat/completions`, {
             method: 'POST',
@@ -18,10 +20,10 @@ ${rawRz}`;
                 stream: false
             })
         });
-        if (!res.ok) return "Thinking deeply about the situation...";
+        if (!res.ok) return fallbackStr;
         const data = await res.json();
-        return data.choices?.[0]?.message?.content || "Organizing thoughts...";
+        return data.choices?.[0]?.message?.content || fallbackStr;
     } catch (e) {
-        return "Thinking deeply...";
+        return fallbackStr;
     }
 }
