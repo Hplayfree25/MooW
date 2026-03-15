@@ -91,10 +91,14 @@ export default function Sidebar() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        const storedState = localStorage.getItem("sidebarCollapsed");
+        if (storedState !== null) {
+            setIsCollapsed(JSON.parse(storedState));
+        }
+
         const handleResize = () => {
             if (window.innerWidth <= 768) {
                 setIsMobile(true);
-                setIsCollapsed(false);
             } else {
                 setIsMobile(false);
                 setIsMobileOpen(false);
@@ -245,7 +249,11 @@ export default function Sidebar() {
 
                 <button
                     className={styles.toggleBtn}
-                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    onClick={() => {
+                        const newState = !isCollapsed;
+                        setIsCollapsed(newState);
+                        localStorage.setItem("sidebarCollapsed", JSON.stringify(newState));
+                    }}
                     onMouseEnter={() => setIsToggleHovered(true)}
                     onMouseLeave={() => setIsToggleHovered(false)}
                     style={{ margin: isCollapsed ? '0 auto' : '0' }}
