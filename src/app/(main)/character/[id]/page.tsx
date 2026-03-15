@@ -34,23 +34,24 @@ function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, i
     const [showReplies, setShowReplies] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    const [reactionType, setReactionType] = useState<string | null>(comment.userReaction || null);
-    const [reactions, setReactions] = useState<{ type: string, count: number }[]>(comment.reactions || []);
+    const [reactionType, setReactionType] = useState<string | null>(comment?.userReaction || null);
+    const [reactions, setReactions] = useState<{ type: string, count: number }[]>(comment?.reactions || []);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
-        if (comment.userReaction !== undefined) {
+        if (comment?.userReaction !== undefined) {
             setReactionType(comment.userReaction);
         }
-        if (comment.reactions !== undefined) {
+        if (comment?.reactions !== undefined) {
             setReactions(comment.reactions);
         }
-    }, [comment.userReaction, comment.reactions]);
+    }, [comment?.userReaction, comment?.reactions]);
 
     const [showReactions, setShowReactions] = useState(false);
     const pressTimeout = useRef<NodeJS.Timeout | null>(null);
     const hoverTimer = useRef<NodeJS.Timeout | null>(null);
 
-    const replies = allComments.filter((c: any) => c.parentId === comment.id);
+    const replies = (allComments || []).filter((c: any) => c && c.parentId === comment?.id);
 
     const handlePointerDown = (e: React.PointerEvent) => {
         if (e.button !== 0 && e.pointerType === 'mouse') return;
@@ -135,14 +136,44 @@ function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, i
     };
 
     const handleDelete = () => {
-        if (confirm("Are you sure you want to delete this comment?")) {
-            onDelete(comment.id);
-        }
+        onDelete(comment.id);
+        setShowDeleteModal(false);
         setIsMenuOpen(false);
     };
 
     return (
         <div style={{ padding: level === 0 ? '0.5rem 0' : '0' }}>
+            {typeof document !== 'undefined' && createPortal(
+                <AnimatePresence>
+                    {showDeleteModal && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className={styles.modalOverlay}
+                            onClick={() => setShowDeleteModal(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                                className={styles.modalContent}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <h3 className={styles.modalTitle}>Delete Comment</h3>
+                                <p className={styles.modalText}>Are you sure you want to delete this comment? This action cannot be undone.</p>
+                                <div className={styles.modalActions}>
+                                    <button className={styles.cancelBtn} onClick={() => setShowDeleteModal(false)}>Cancel</button>
+                                    <button className={styles.deleteBtn} onClick={handleDelete}>Delete</button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
             <div className={styles.commentContainer} style={{ borderBottom: level > 0 ? 'none' : undefined, padding: level > 0 ? '0.5rem 0' : undefined }}>
                 <div className={styles.commentAvatar}>
                     {comment.userImageUrl && comment.userImageUrl.trim() !== "" ? (
@@ -197,11 +228,11 @@ function CommentItem({ comment, allComments, onReply, onDelete, currentUserId, i
                                             transition={{ duration: 0.15, ease: "easeOut" }}
                                             className={styles.commentDropdown}
                                         >
-                                            <button className={`${styles.commentDropdownItem} ${styles.danger}`} onClick={handleReport}>
+                                            <button className={`${styles.commentDropdownItem} ${styles.warning}`} onClick={handleReport}>
                                                 <Flag size={14} /> Report
                                             </button>
                                             {(currentUserId === comment.userId || isStaff) && (
-                                                <button className={`${styles.commentDropdownItem} ${styles.danger}`} onClick={handleDelete}>
+                                                <button className={`${styles.commentDropdownItem} ${styles.danger}`} onClick={() => { setShowDeleteModal(true); setIsMenuOpen(false); }}>
                                                     <Trash size={14} /> Delete
                                                 </button>
                                             )}
@@ -525,6 +556,8 @@ export default function CharacterDetailsPage() {
     const [showFullAvatar, setShowFullAvatar] = useState(false);
     const [actionError, setActionError] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     useEffect(() => {
         async function fetchCharacter() {
@@ -543,6 +576,10 @@ export default function CharacterDetailsPage() {
     }, [params]);
 
     const handleShare = async () => {
+        setShowShareModal(true);
+    };
+
+    const handleCopyLink = async () => {
         try {
             await navigator.clipboard.writeText(window.location.href);
             setShareCopied(true);
@@ -553,7 +590,7 @@ export default function CharacterDetailsPage() {
     };
 
     const handleDeleteCharacter = async () => {
-        if (!confirm("Are you sure you want to delete this character? This action cannot be undone.")) return;
+        if (!character?.id) return;
         setIsDeleting(true);
         const res = await deleteCharacterAction(character.id);
         if (res.success) {
@@ -562,11 +599,12 @@ export default function CharacterDetailsPage() {
         } else {
             toast.error(res.error || "Failed to delete character.");
             setIsDeleting(false);
+            setShowDeleteModal(false);
         }
     };
 
     const handleLikeToggle = async () => {
-        if (isLiking || !character) return;
+        if (isLiking || !character?.id) return;
         setIsLiking(true);
 
         if (hasLiked) {
@@ -595,7 +633,7 @@ export default function CharacterDetailsPage() {
 
     const handleCommentSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!commentText.trim() || !character || isCommenting) return;
+        if (!commentText.trim() || !character?.id || isCommenting) return;
         setIsCommenting(true);
 
         const res = await addCommentAction(character.id, commentText);
@@ -612,7 +650,6 @@ export default function CharacterDetailsPage() {
             }, ...prev]);
             setCommentText("");
             
-            // Reset textarea height
             const textarea = document.getElementById("main-comment-textarea");
             if (textarea) textarea.style.height = 'auto';
         } else {
@@ -622,9 +659,10 @@ export default function CharacterDetailsPage() {
     };
 
     const handleDeleteComment = async (commentId: string) => {
+        if (!commentId) return;
         const res = await deleteCommentAction(commentId);
         if (res.success) {
-            setComments(prev => prev.filter(c => c.id !== commentId && c.parentId !== commentId));
+            setComments(prev => (prev || []).filter(c => c && c.id !== commentId && c.parentId !== commentId));
             toast.success("Comment deleted");
         } else {
             toast.error(res.error || "Failed to delete comment");
@@ -632,7 +670,7 @@ export default function CharacterDetailsPage() {
     };
 
     const handleReply = async (parentId: string, text: string) => {
-        if (!character) return;
+        if (!character?.id) return;
         const res = await addCommentAction(character.id, text, parentId);
         if (res.success) {
             setComments(prev => [...prev, {
@@ -673,18 +711,137 @@ export default function CharacterDetailsPage() {
     }
 
     if (error || !character) {
-        return <CharacterNotFound chrno={params.id as string} />;
+        return <CharacterNotFound chrno={(params?.id as string) || "unknown"} />;
     }
 
     return (
         <div className={styles.pageContainer}>
+            {typeof document !== 'undefined' && createPortal(
+                <AnimatePresence>
+                    {showDeleteModal && character && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className={styles.modalOverlay}
+                            onClick={() => setShowDeleteModal(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                                className={styles.modalContent}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <h3 className={styles.modalTitle}>Delete Character</h3>
+                                <p className={styles.modalText}>Are you sure you want to delete <strong>{character.characterName}</strong>? This action cannot be undone and will remove all associated data.</p>
+                                <div className={styles.modalActions}>
+                                    <button className={styles.cancelBtn} onClick={() => setShowDeleteModal(false)}>Cancel</button>
+                                    <button className={styles.deleteBtn} onClick={handleDeleteCharacter} disabled={isDeleting}>
+                                        {isDeleting ? <Loader2 size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> : 'Delete'}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                    {showShareModal && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className={styles.modalOverlay}
+                            onClick={() => setShowShareModal(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                                className={`${styles.modalContent} ${styles.shareModalContent}`}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className={styles.shareIconWrapper}>
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <motion.path 
+                                            d="M18 8C19.6569 8 21 6.65685 21 5C21 3.34315 19.6569 2 18 2C16.3431 2 15 3.34315 15 5C15 6.65685 16.3431 8 18 8Z" 
+                                            stroke="var(--accent-primary)" 
+                                            strokeWidth="2" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round"
+                                            initial={{ pathLength: 0, opacity: 0 }}
+                                            animate={{ pathLength: 1, opacity: 1 }}
+                                            transition={{ duration: 0.5, delay: 0.2 }}
+                                        />
+                                        <motion.path 
+                                            d="M6 15C7.65685 15 9 13.6569 9 12C9 10.3431 7.65685 9 6 9C4.34315 9 3 10.3431 3 12C3 13.6569 4.34315 15 6 15Z" 
+                                            stroke="var(--accent-primary)" 
+                                            strokeWidth="2" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round"
+                                            initial={{ pathLength: 0, opacity: 0 }}
+                                            animate={{ pathLength: 1, opacity: 1 }}
+                                            transition={{ duration: 0.5, delay: 0.4 }}
+                                        />
+                                        <motion.path 
+                                            d="M18 22C19.6569 22 21 20.6569 21 19C21 17.3431 19.6569 16 18 16C16.3431 16 15 17.3431 15 19C15 20.6569 16.3431 22 18 22Z" 
+                                            stroke="var(--accent-primary)" 
+                                            strokeWidth="2" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round"
+                                            initial={{ pathLength: 0, opacity: 0 }}
+                                            animate={{ pathLength: 1, opacity: 1 }}
+                                            transition={{ duration: 0.5, delay: 0.6 }}
+                                        />
+                                        <motion.path 
+                                            d="M8.59 13.51L15.42 17.49" 
+                                            stroke="var(--accent-primary)" 
+                                            strokeWidth="2" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round"
+                                            initial={{ pathLength: 0, opacity: 0 }}
+                                            animate={{ pathLength: 1, opacity: 1 }}
+                                            transition={{ duration: 0.5, delay: 0.8 }}
+                                        />
+                                        <motion.path 
+                                            d="M15.41 6.51001L8.59 10.49" 
+                                            stroke="var(--accent-primary)" 
+                                            strokeWidth="2" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round"
+                                            initial={{ pathLength: 0, opacity: 0 }}
+                                            animate={{ pathLength: 1, opacity: 1 }}
+                                            transition={{ duration: 0.5, delay: 1.0 }}
+                                        />
+                                    </svg>
+                                </div>
+                                <h3 className={styles.modalTitle}>Share Character</h3>
+                                <p className={styles.modalText}>Share this character with your friends!</p>
+                                <div className={styles.shareLinkBox}>
+                                    <input type="text" readOnly value={typeof window !== 'undefined' ? window.location.href : ''} className={styles.shareLinkInput} />
+                                    <button className={styles.copyBtn} onClick={handleCopyLink}>
+                                        {shareCopied ? <Check size={16} /> : <Share2 size={16} />}
+                                        {shareCopied ? 'Copied!' : 'Copy'}
+                                    </button>
+                                </div>
+                                <div className={styles.modalActions} style={{ width: '100%' }}>
+                                    <button className={styles.cancelBtn} style={{ width: '100%' }} onClick={() => setShowShareModal(false)}>Close</button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
             <div className={styles.headerBar}>
                 <button onClick={() => router.push("/")} className={styles.iconBtn}>
                     <ArrowLeft size={24} />
                 </button>
                 <div className={styles.headerActions}>
                     <button className={styles.iconBtn} onClick={handleShare} title="Share Character">
-                        {shareCopied ? <Check size={20} color="#10b981" /> : <Share2 size={20} />}
+                        <Share2 size={20} />
                     </button>
                     {character.isOwner && (
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -704,7 +861,7 @@ export default function CharacterDetailsPage() {
                             </motion.button>
                             <motion.button
                                 whileTap={{ scale: 0.9 }}
-                                onClick={handleDeleteCharacter}
+                                onClick={() => setShowDeleteModal(true)}
                                 disabled={isDeleting}
                                 title="Remove Character"
                                 style={{
