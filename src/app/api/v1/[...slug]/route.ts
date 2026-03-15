@@ -24,9 +24,17 @@ export async function OPTIONS(req: NextRequest, { params }: { params: Promise<{ 
 
 function getModelMap(): Record<string, string> {
     try {
-        const yamlPath = path.join(process.cwd(), 'models.yaml');
-        if (fs.existsSync(yamlPath)) {
-            const content = fs.readFileSync(yamlPath, 'utf8');
+        let content = '';
+        if (process.env.MODELS_YAML_CONTENT) {
+            content = process.env.MODELS_YAML_CONTENT.replace(/\\n/g, '\n');
+        } else {
+            const yamlPath = path.join(process.cwd(), 'models.yaml');
+            if (fs.existsSync(yamlPath)) {
+                content = fs.readFileSync(yamlPath, 'utf8');
+            }
+        }
+
+        if (content) {
             const map: Record<string, string> = {};
             const lines = content.split('\n');
             for (const line of lines) {
