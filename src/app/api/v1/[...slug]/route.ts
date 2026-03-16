@@ -107,12 +107,14 @@ async function handleProxy(req: NextRequest, params: { slug: string[] }) {
         const path = params.slug.join("/");
 
         if (req.method === "GET" && path === "models") {
-            const data = Object.keys(MODEL_MAP).map(key => ({
-                id: key,
-                object: "model",
-                created: Date.now(),
-                owned_by: "system"
-            }));
+            const data = Object.keys(MODEL_MAP)
+                .filter(key => key !== "NeroLLM Flash")
+                .map(key => ({
+                    id: key,
+                    object: "model",
+                    created: Date.now(),
+                    owned_by: "system"
+                }));
 
             return NextResponse.json({
                 object: "list",
