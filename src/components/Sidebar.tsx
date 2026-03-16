@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, MessageCircle, PlusCircle, Plus, Settings, LogOut, Bell } from "lucide-react";
+import { Compass, MessageCircle, PlusCircle, Plus, Settings, LogOut, Bell, User } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./sidebar.module.css";
@@ -134,7 +134,8 @@ export default function Sidebar() {
 
     const links = [
         { href: "/", icon: <Compass size={24} />, name: "Explore", preview: "Find Characters", exact: true },
-        { href: "/chats", icon: <MessageCircle size={20} />, name: "Chats", preview: "Recent Conversation", match: "/chat", hasSubMenu: true },
+        { href: "/chats", icon: <MessageCircle size={20} />, name: "Chats", preview: "Recent Conversation", match: "/chat" },
+        { href: "/profile", icon: <User size={20} />, name: "My Character", preview: "Your Characters", match: "/profile" },
         { href: "/notifications", icon: <Bell size={20} />, name: "Notifications", preview: "Updates & Alerts", match: "/notifications" },
         { href: "/create", icon: <PlusCircle size={20} />, name: "Create", preview: "New Character", exact: true },
     ];
@@ -147,7 +148,7 @@ export default function Sidebar() {
                         <div className={`${styles.skeleton} ${styles.skeletonIcon}`} />
                     </div>
                     <div className={styles.sidebarContent}>
-                        {[1, 2, 3, 4].map((i) => (
+                        {[1, 2, 3, 4, 5].map((i) => (
                             <div key={i} className={styles.skeletonNavItem}>
                                 <div className={`${styles.skeleton} ${styles.skeletonIcon}`} />
                                 <div className={styles.skeletonTextGroup}>
@@ -184,7 +185,7 @@ export default function Sidebar() {
                     <span className={styles.bottomNavLabel}>Explore</span>
                 </Link>
 
-                <div className={`${styles.bottomNavItem} ${pathname.startsWith("/chat") ? styles.bottomNavItemActive : ""} chatsMenuContainer`} style={{ position: 'relative' }}>
+                <div className={`${styles.bottomNavItem} ${(pathname.startsWith("/chat") || pathname.startsWith("/profile")) ? styles.bottomNavItemActive : ""} chatsMenuContainer`} style={{ position: 'relative' }}>
                     <button 
                         onClick={() => setIsChatsMenuOpen(!isChatsMenuOpen)} 
                         className={styles.bottomNavBtn}
@@ -253,55 +254,6 @@ export default function Sidebar() {
                     const isActive = link.exact
                         ? pathname === link.href
                         : pathname.startsWith(link.match || "");
-                        
-                    if (link.hasSubMenu) {
-                        return (
-                            <div key={link.name} className={`chatsMenuContainer`} style={{ position: 'relative' }}>
-                                <button
-                                    onClick={() => setIsChatsMenuOpen(!isChatsMenuOpen)}
-                                    className={`${styles.navItem} ${isActive ? styles.navItemActive : ""} w-full`}
-                                    style={{ width: '100%', border: 'none', background: isActive ? 'var(--accent-light)' : 'transparent', textAlign: 'left', fontFamily: 'inherit' }}
-                                >
-                                    <div className={styles.navItemIcon}>{link.icon}</div>
-                                    <AnimatePresence>
-                                        {!isCollapsed && (
-                                            <motion.div
-                                                className={styles.navItemInfo}
-                                                initial={{ opacity: 0, width: 0 }}
-                                                animate={{ opacity: 1, width: "auto" }}
-                                                exit={{ opacity: 0, width: 0 }}
-                                                transition={{ duration: 0.35, ease: "easeInOut" }}
-                                                style={{ whiteSpace: "nowrap", overflow: "hidden" }}
-                                            >
-                                                <h3 className={styles.navItemName}>{link.name}</h3>
-                                                <p className={styles.navItemPreview}>{link.preview}</p>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </button>
-                                
-                                <AnimatePresence>
-                                    {isChatsMenuOpen && (
-                                        <motion.div
-                                            initial={{ opacity: 0, x: -10, scale: 0.95 }}
-                                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.95 }}
-                                            transition={{ duration: 0.2 }}
-                                            className={styles.chatsDropdownDesktop}
-                                            style={{ left: isCollapsed ? '80px' : '200px' }}
-                                        >
-                                            <Link href="/profile" className={styles.chatsDropdownItem} onClick={() => setIsChatsMenuOpen(false)}>
-                                                My Character
-                                            </Link>
-                                            <Link href="/chats" className={styles.chatsDropdownItem} onClick={() => setIsChatsMenuOpen(false)}>
-                                                History Chat
-                                            </Link>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        );
-                    }
                         
                     return (
                         <Link
