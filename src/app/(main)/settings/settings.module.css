@@ -540,6 +540,10 @@ input:checked+.slider:before {
     gap: 1.5rem;
 }
 
+.mobileLogoutBtn {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .settingsLayout {
         flex-direction: column;
@@ -557,6 +561,17 @@ input:checked+.slider:before {
         white-space: nowrap;
         padding: 0.5rem 0.75rem;
         font-size: 0.9rem;
+    }
+
+    .mobileLogoutBtn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #ef4444;
+    }
+
+    .mobileLogoutBtn:hover {
+        background-color: rgba(239, 68, 68, 0.1);
     }
 
     .settingsContent {

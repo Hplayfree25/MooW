@@ -348,3 +348,77 @@
     height: 8px;
     border-radius: 4px;
 }
+
+.bottomNavBtn {
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    gap: 0.25rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.chatsDropdownMobile {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    min-width: 140px;
+    z-index: 100;
+}
+
+.chatsDropdownDesktop {
+    position: absolute;
+    top: 0;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    min-width: 160px;
+    z-index: 100;
+}
+
+.chatsDropdownItem {
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color var(--transition-fast);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.chatsDropdownItem:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.chatsDropdownItem:not(:last-child) {
+    border-bottom: 1px solid var(--border-light);
+}
+
+@media (max-width: 768px) {
+    .sidebarContainer {
+        display: none !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .bottomNav, .skeletonBottomNav {
+        display: none !important;
+    }
+}

@@ -46,6 +46,15 @@ export function SettingsForm({ user, settings, apiConfigs }: { user: any, settin
                         {tab}
                     </button>
                 ))}
+                
+                <button
+                    className={`${styles.tabBtn} ${styles.mobileLogoutBtn}`}
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    title="Log Out"
+                >
+                    <LogOut size={18} />
+                    <span>Log Out</span>
+                </button>
             </div>
         </div>
     );
