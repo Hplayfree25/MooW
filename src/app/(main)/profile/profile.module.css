@@ -334,6 +334,11 @@
     font-size: 0.95rem;
 }
 
+.markdownContent p {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
 .markdownContent a {
     color: var(--accent-primary, #3b82f6);
     text-decoration: none;
@@ -346,7 +351,6 @@
 .markdownContent img {
     max-width: 100%;
     border-radius: var(--radius-md, 8px);
-    margin: 1rem 0;
 }
 
 .markdownContent h1,

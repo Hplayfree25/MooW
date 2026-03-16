@@ -200,7 +200,7 @@ export function RichTextEditor({ defaultValue = "", content, name, onChange, var
             Underline,
             ImageResize,
             Spoiler,
-            TextAlign.configure({ types: ['heading', 'paragraph'] }),
+            TextAlign.configure({ types: ['heading', 'paragraph', 'image'] }),
             Link.configure({ openOnClick: false }),
             Markdown.configure({ html: true, transformPastedText: true, transformCopiedText: true }),
         ],

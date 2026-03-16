@@ -217,22 +217,11 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                         <Camera size={32} color="white" />
                     </div>
                 )}
-                {user.isOwner && (
-                    <div className={styles.actions}>
-                        <button
-                            className={`${styles.btnAction} ${isEditing ? styles.btnSave : styles.btnEdit}`}
-                            title={isEditing ? "Save Profile" : "Edit Profile"}
-                            onClick={toggleEdit}
-                        >
-                            {isEditing ? "Done" : "Edit Profile"}
-                        </button>
-                    </div>
-                )}
             </div>
 
             <div className={styles.header}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div className={styles.pfpWrap} style={{ marginTop: 0 }}>
+                    <div className={styles.pfpWrap}>
                         <img
                             src={user.avatarUrl}
                             alt={`${user.username}'s avatar`}
@@ -245,43 +234,53 @@ export default function ClientProfile({ user, badges, characters }: { user: User
                         )}
                     </div>
 
-                    {!user.isOwner && (
-                        <div className={styles.publicActions}>
-                            <button className={`${styles.btnAction} ${isFollowing ? styles.btnEdit : styles.btnFollow}`} onClick={handleFollowToggle}>
-                                {isFollowing ? "Unfollow" : "Follow"}
+                    <div className={styles.publicActions}>
+                        {user.isOwner ? (
+                            <button
+                                className={`${styles.btnAction} ${isEditing ? styles.btnSave : styles.btnEdit}`}
+                                title={isEditing ? "Save Profile" : "Edit Profile"}
+                                onClick={toggleEdit}
+                            >
+                                {isEditing ? "Done" : "Edit Profile"}
                             </button>
-
-                            <div style={{ position: 'relative' }}>
-                                <button
-                                    className={`${styles.btnAction} ${styles.btnEdit}`}
-                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                    style={{ padding: '0.5rem', borderRadius: '50%' }}
-                                >
-                                    <MoreHorizontal size={20} />
+                        ) : (
+                            <>
+                                <button className={`${styles.btnAction} ${isFollowing ? styles.btnEdit : styles.btnFollow}`} onClick={handleFollowToggle}>
+                                    {isFollowing ? "Unfollow" : "Follow"}
                                 </button>
 
-                                {isMenuOpen && (
-                                    <>
-                                        <div
-                                            style={{ position: 'fixed', inset: 0, zIndex: 40 }}
-                                            onClick={() => setIsMenuOpen(false)}
-                                        />
-                                        <div className={styles.dropdownMenu} style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 50, background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', minWidth: '150px', display: 'flex', flexDirection: 'column' }}>
-                                            <button className={styles.dropdownItem} onClick={handleReport}>
-                                                <Flag size={14} style={{ marginRight: '8px' }} /> Report
-                                            </button>
-                                            <button className={styles.dropdownItem} onClick={() => { setIsMenuOpen(false); toast.info("Block feature coming soon"); }}>Block</button>
-                                            <button className={styles.dropdownItem} onClick={() => {
-                                                setIsMenuOpen(false);
-                                                navigator.clipboard.writeText(window.location.href);
-                                                toast.success("Profile link copied!");
-                                            }}>Share</button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                                <div style={{ position: 'relative' }}>
+                                    <button
+                                        className={`${styles.btnAction} ${styles.btnEdit}`}
+                                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                        style={{ padding: '0.5rem', borderRadius: '50%' }}
+                                    >
+                                        <MoreHorizontal size={20} />
+                                    </button>
+
+                                    {isMenuOpen && (
+                                        <>
+                                            <div
+                                                style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                                                onClick={() => setIsMenuOpen(false)}
+                                            />
+                                            <div className={styles.dropdownMenu} style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', zIndex: 50, background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', minWidth: '150px', display: 'flex', flexDirection: 'column' }}>
+                                                <button className={styles.dropdownItem} onClick={handleReport}>
+                                                    <Flag size={14} style={{ marginRight: '8px' }} /> Report
+                                                </button>
+                                                <button className={styles.dropdownItem} onClick={() => { setIsMenuOpen(false); toast.info("Block feature coming soon"); }}>Block</button>
+                                                <button className={styles.dropdownItem} onClick={() => {
+                                                    setIsMenuOpen(false);
+                                                    navigator.clipboard.writeText(window.location.href);
+                                                    toast.success("Profile link copied!");
+                                                }}>Share</button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 <div className={styles.info}>
