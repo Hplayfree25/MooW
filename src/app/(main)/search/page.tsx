@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
-import { Search, Flame, Star, Clock, MessageSquare, Heart, ArrowLeft, Loader2, Frown } from "lucide-react";
+import { Search, Flame, Star, Clock, MessageSquare, Heart, ArrowLeft, Loader2, Frown, SlidersHorizontal, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./search.module.css";
 import { getCharactersAction } from "../actions";
@@ -18,6 +18,8 @@ function SearchPageContent() {
   const [characters, setCharacters] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
     async function fetchDb() {
@@ -41,10 +43,21 @@ function SearchPageContent() {
     }
   };
 
-  const toggleTag = (tag: string) => {
-    setActiveTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      const newTag = tagInput.trim().toLowerCase();
+      if (newTag && !activeTags.includes(newTag)) {
+        setActiveTags(prev => [...prev, newTag]);
+      }
+      setTagInput('');
+    } else if (e.key === 'Backspace' && tagInput === '' && activeTags.length > 0) {
+      setActiveTags(prev => prev.slice(0, -1));
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setActiveTags(prev => prev.filter(t => t !== tagToRemove));
   };
 
   const availableTags = useMemo(() => {
@@ -116,40 +129,74 @@ function SearchPageContent() {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleSearch}
           />
+          <button 
+            className={`${styles.toggleFilterBtn} ${isFilterOpen ? styles.toggleFilterBtnActive : ''}`}
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            title="Toggle Filters"
+          >
+            <SlidersHorizontal size={20} />
+          </button>
         </div>
 
-        <div className={styles.filtersPanel}>
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Sort By</span>
-            <div className={styles.filterOptions}>
-              {["Relevance", "Popular", "Trending", "Creation Date"].map(sort => (
-                <button
-                  key={sort}
-                  className={`${styles.filterBtn} ${activeSort === sort ? styles.filterBtnActive : ''}`}
-                  onClick={() => setActiveSort(sort)}
-                >
-                  {sort}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {availableTags.length > 0 && (
+        <div className={`${styles.filtersPanel} ${isFilterOpen ? styles.filtersPanelOpen : ''}`}>
+          <div className={styles.filtersContent}>
             <div className={styles.filterGroup}>
-              <span className={styles.filterLabel}>Filter by Tags</span>
+              <span className={styles.filterLabel}>Sort By</span>
               <div className={styles.filterOptions}>
-                {availableTags.map(tag => (
+                {["Relevance", "Popular", "Trending", "Creation Date"].map(sort => (
                   <button
-                    key={tag}
-                    className={`${styles.filterBtn} ${activeTags.includes(tag) ? styles.filterBtnActive : ''}`}
-                    onClick={() => toggleTag(tag)}
+                    key={sort}
+                    className={`${styles.filterBtn} ${activeSort === sort ? styles.filterBtnActive : ''}`}
+                    onClick={() => setActiveSort(sort)}
                   >
-                    #{tag}
+                    {sort}
                   </button>
                 ))}
               </div>
             </div>
-          )}
+
+            <div className={styles.filterGroup}>
+              <span className={styles.filterLabel}>Tags</span>
+              <div className={styles.tagInputWrapper}>
+                {activeTags.map(tag => (
+                  <span key={tag} className={styles.activeTag}>
+                    {tag}
+                    <button onClick={() => removeTag(tag)} className={styles.removeTagBtn}>
+                      <X size={14} />
+                    </button>
+                  </span>
+                ))}
+                <input
+                  type="text"
+                  className={styles.tagInput}
+                  placeholder={activeTags.length === 0 ? "Type a tag and press space..." : ""}
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleTagInputKeyDown}
+                />
+              </div>
+              
+              {availableTags.filter(t => !activeTags.includes(t) && t.toLowerCase().includes(tagInput.toLowerCase())).length > 0 && (
+                <div className={styles.suggestedTags}>
+                  {availableTags
+                    .filter(t => !activeTags.includes(t) && t.toLowerCase().includes(tagInput.toLowerCase()))
+                    .slice(0, 8)
+                    .map(tag => (
+                      <button
+                        key={tag}
+                        className={styles.suggestedTagBtn}
+                        onClick={() => {
+                          setActiveTags(prev => [...prev, tag]);
+                          setTagInput('');
+                        }}
+                      >
+                        +{tag}
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

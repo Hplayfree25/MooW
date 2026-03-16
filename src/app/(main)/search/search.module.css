@@ -83,13 +83,140 @@
 }
 
 .filtersPanel {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 0.3s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+    overflow: hidden;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    border: 1px solid transparent;
+    padding: 0 1.5rem;
+    margin-top: -1rem;
+}
+
+.filtersPanelOpen {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    padding: 1.5rem;
+    margin-top: 0;
+    border-color: var(--border-light);
+}
+
+.filtersContent {
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    background-color: var(--bg-secondary);
-    padding: 1.5rem;
-    border-radius: var(--radius-xl);
+}
+
+.toggleFilterBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all var(--transition-fast);
+}
+
+.toggleFilterBtn:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+}
+
+.toggleFilterBtnActive {
+    color: var(--accent-primary);
+    background-color: var(--bg-tertiary);
+}
+
+.tagInputWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-primary);
     border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    min-height: 2.75rem;
+    transition: all var(--transition-fast);
+}
+
+.tagInputWrapper:focus-within {
+    border-color: var(--accent-hover);
+    box-shadow: var(--shadow-glow);
+}
+
+.tagInput {
+    flex: 1;
+    min-width: 120px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.tagInput::placeholder {
+    color: var(--text-tertiary);
+}
+
+.activeTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.removeTagBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 0.1rem;
+    transition: all 0.2s;
+}
+
+.removeTagBtn:hover {
+    color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.suggestedTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.suggestedTagBtn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    background-color: transparent;
+    border: 1px dashed var(--border-light);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suggestedTagBtn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-style: solid;
 }
 
 .filterGroup {
